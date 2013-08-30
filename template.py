@@ -134,8 +134,7 @@ class DataTemplate(AbstractTemplate):
         if os.path.exists(self.path):
             self.loadp(self.path)
 
-    @property
-    def data(self):
+    def get(self):
         return self._data
 
     def set(self, data):

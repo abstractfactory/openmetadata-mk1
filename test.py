@@ -167,7 +167,7 @@ def test_link_versus_manual():
     manual = om.DataTemplate('image1.png', parent=channel)
     manual.set(link)
 
-    assert_equals(linked.data, manual.data)
+    assert_equals(linked.get(), manual.get())
 
 
 def test_link():
