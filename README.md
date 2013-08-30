@@ -1,4 +1,4 @@
 OpenMetadata
 =============
 
-Hierarchical metadata format and API capable of storing and accessing any format via any protocol of unlimited size and infinite control.
+Hierarchical metadata format and API for storing and accessing any format via any protocol of unlimited size and infinite control.
