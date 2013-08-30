@@ -80,3 +80,24 @@ class AbstractTemplate:
     @abstractmethod
     def load(self, other):
         pass
+
+
+class AbstractSource(object):
+    def __init__(self, path):
+        self._path = path
+
+    def __str__(self):
+        return str(self._path)
+
+    def __repr__(self):
+        return u"%s(%r)" % (self.__class__.__name__, self.__str__())
+
+    def __eq__(self, other):
+        return repr(self) == repr(other)
+
+    def __ne__(self, other):
+        return repr(self) != repr(other)
+
+    @property
+    def path(self):
+        return self._path

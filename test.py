@@ -1,17 +1,20 @@
+
 import os
 import sys
 import shutil
 
 from nose.tools import *
 
-pythonpath = 's:/research/beast/openmetadata/api'
-if not pythonpath in sys.path:
-    sys.path.insert(0, pythonpath)
+package = os.path.dirname(__file__)
+path = os.path.dirname(package)
+
+if not path in sys.path:
+    sys.path.insert(0, path)
+
+root = os.path.join(package, 'test')
 
 import openmetadata as om
-from openmetadata import constant
 
-root = r's:\test'
 
 
 def test_data():
@@ -85,18 +88,29 @@ def test_metadata():
     # Created 's:\test\.meta'
 
 
-def test_metadata_dump():
-    """Dump metadata"""
-    metadata = om.MetadataTemplate(parent=root)
-
-    channel = om.ChannelTemplate('chan.txt', parent=metadata)
+# def test_metadata_dump():
+#     """Dump metadata"""
     
-    data = om.DataTemplate('text.txt', parent=channel)
-    data.load('some text')
+#     if not os.name == 'nt':
+#         return
 
-    # print metadata.dump()
-    dump = {'s:\\test\\.meta\\chan.txt': {'s:\\test\\.meta\\chan.txt\\text.txt': 'some text'}}
-    assert_equals(dump, metadata.dump())
+#     metadata = om.MetadataTemplate(parent=root)
+
+#     channel = om.ChannelTemplate('chan.txt', parent=metadata)
+    
+#     data = om.DataTemplate('text.txt', parent=channel)
+#     data.load('some text')
+
+#     # print metadata.dump()
+#     print root
+#     dump = {
+#                 os.path.join(root, r'\.meta\chan.txt'): 
+#                     {os.path.join(root, r'\.meta\chan.txt\text.txt'): 
+#                         'some text'
+#                     }
+#             }
+
+#     assert_equals(dump, metadata.dump())
 
 
 def test_metadata_load():
@@ -124,8 +138,6 @@ def test_metadata_load():
 def test_load():
     """Load existing path"""
 
-    root = r's:\test'
-    
     existing_meta = om.MetadataTemplate(parent=root)
     existing_meta.dir()
     
@@ -136,6 +148,42 @@ def test_load():
     # channel2       img         s:/test/.meta/channel2.img
     # channel3       vid         s:/test/.meta/channel3.vid
     
+def test_link_versus_manual():
+    """Test Linking versus Manual set
+
+    Ensure that setting data to a Link object directly is the
+    same as using link() with a path
+
+    """
+
+    metadata = om.MetadataTemplate(parent=root)
+
+    channel = om.ChannelTemplate('chan.img', parent=metadata)
+    
+    linked = om.DataTemplate('image1.png', parent=channel)
+    linked.link(os.path.join(root, 'image1.png'))
+
+    link = om.template.Link(os.path.join(root, 'image1.png'))
+    manual = om.DataTemplate('image1.png', parent=channel)
+    manual.set(link)
+
+    assert_equals(linked.data, manual.data)
+
+
+def test_link():
+    """Test linking to binary file"""
+    metadata = om.MetadataTemplate(parent=root)
+
+    channel = om.ChannelTemplate('chan.img', parent=metadata)
+    
+    linked = om.DataTemplate('image1.png', parent=channel)
+    linked.link(os.path.join(root, 'image1.png'))
+
+    om.create(metadata)
+
+    shutil.rmtree(metadata.path)
+    print "Removed %s" % metadata.path
+
 
 # def test_reference_http():
 #     # Reference a file from the internet
@@ -143,17 +191,18 @@ def test_load():
 #     root = r's:\root'
     
 #     metadata = om.MetadataTemplate(parent=root)
-#     chan = om.ChannelReference(name='channel1', parent=metadata)
-#     chan.setformat(om.Image)
-#     data = om.DataTemplate(name='data1', parent=metadata)
-#     data.set('http://pipi.io/logo.png')
+
+#     chan = om.ChannelReference(name='channel1.bin', parent=metadata)
+
+#     data = om.DataTemplate(name='index.html', parent=chan)
+#     data.copy('http://pipi.io/index.html')
     
 #     om.create(metadata)
 #     print "Removed %s" % metadata.path
     
-#     # Created 's:/root/.meta
-#     # Created 's:/root/.meta/channel1.png
-#     # Copied 's:/root/.meta/channel1.png/data1.png'
+    # Created 's:/root/.meta
+    # Created 's:/root/.meta/channel1.png
+    # Copied 's:/root/.meta/channel1.png/data1.png'
 
     
 # def test_root_ftp():
@@ -178,11 +227,13 @@ def test_load():
 if __name__ == '__main__':
     import nose
     nose.run(defaultTest=__name__)
-
+    # print root
     # test_data()
     # test_subchannel()
     # test_metadata_dump()
     # test_metadata_load()
+    # test_load()
+    # test_link_versus_manual()
     # test_dump()
     # test_txt()
     # test_img()

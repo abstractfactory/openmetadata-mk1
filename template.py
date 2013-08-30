@@ -3,19 +3,20 @@
 import os
 import logging
 
-from interface import AbstractTemplate
+from interface import AbstractTemplate, AbstractSource
 import constant
 
 log = logging.getLogger('openmetadata.template')
 
 VERSION = '0.5'
+METANAME = '.meta'
 
 
 class MetadataTemplate(AbstractTemplate):
 
     log = logging.getLogger('openmetadata.template.MetadataTemplate')
 
-    def __init__(self, path='.meta', parent=None):
+    def __init__(self, path=METANAME, parent=None):
         super(MetadataTemplate, self).__init__(path, parent)
         self._children = []
 
@@ -112,6 +113,8 @@ class ChannelTemplate(AbstractTemplate):
             
             if os.path.isdir(path):
                 # A directory could only be a .meta folder
+                assert os.path.basename(path) == METANAME
+
                 child_object = MetadataTemplate(path)
             else:
                 # Otherwise it's a file which makes it a Data object
@@ -131,11 +134,24 @@ class DataTemplate(AbstractTemplate):
         if os.path.exists(self.path):
             self.loadp(self.path)
 
-    def dump(self):
+    @property
+    def data(self):
         return self._data
 
+    def set(self, data):
+        """Set data to `data` directly, without any conversion"""
+        self._data = data
+
+    def link(self, path):
+        """Hardlink if possible, otherwise softlink"""
+        self._data = Link(path)
+
     def load(self, other):
-        self._data = other
+        """Convert `other` to string"""
+        self._data = str(other)
+
+    def dump(self):
+        return self._data
 
     def loadp(self, other):
         path = os.path.join(self.path, other)
@@ -144,6 +160,11 @@ class DataTemplate(AbstractTemplate):
         with open(path, 'r') as f:
             data = f.read()
             self.load(data)
+
+
+# Source objects
+Copy = type('Copy', (AbstractSource,), {})
+Link = type('Link', (AbstractSource,), {})
 
 
 class TemplateFactory:
@@ -199,21 +220,7 @@ def getprotocol(url):
 
 
 if __name__ == '__main__':
-    roots = (r's:\test\persist\.meta', 
-             r's:\test\persist\.meta\newchannel.txt',
-             r's:\test\persist\.meta\newchannel.txt\text.txt')
+    cpy = Copy(r's:\test')
+    link = Link(r's:\test')
 
-    # for root in roots:
-    #     temp = TemplateFactory.create(root)
-    #     print repr(temp)
-
-    root = r's:\test\persist\.meta'
-    meta = TemplateFactory.create(root)
-    print meta.dir()
-
-    chan = TemplateFactory.create(r's:\test\persist\.meta\newchannel.txt')
-    print chan.dir()
-
-    subchan = TemplateFactory.create(r's:\test\persist\.meta\newchannel.txt\.meta\newsubchannel.img')
-    print subchan.dir()
-    # meta.load(source)
+    print repr(link)
