@@ -148,8 +148,8 @@ def test_load():
     # channel2       img         s:/test/.meta/channel2.img
     # channel3       vid         s:/test/.meta/channel3.vid
     
-def test_link_versus_manual():
-    """Test Linking versus Manual set
+def test_link_versus_set():
+    """Test hardlink() versus Manual set()
 
     Ensure that setting data to a Link object directly is the
     same as using link() with a path
@@ -161,9 +161,9 @@ def test_link_versus_manual():
     channel = om.ChannelTemplate('chan.img', parent=metadata)
     
     linked = om.DataTemplate('image1.png', parent=channel)
-    linked.link(os.path.join(root, 'image1.png'))
+    linked.hardlink(os.path.join(root, 'image1.png'))
 
-    link = om.template.Link(os.path.join(root, 'image1.png'))
+    link = om.template.Hardlink(os.path.join(root, 'image1.png'))
     manual = om.DataTemplate('image1.png', parent=channel)
     manual.set(link)
 
@@ -176,8 +176,9 @@ def test_link():
 
     channel = om.ChannelTemplate('chan.img', parent=metadata)
     
+    source = os.path.join(root, 'image1.png')
     linked = om.DataTemplate('image1.png', parent=channel)
-    linked.link(os.path.join(root, 'image1.png'))
+    linked.hardlink(source)
 
     om.create(metadata)
 

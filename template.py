@@ -141,9 +141,15 @@ class DataTemplate(AbstractTemplate):
         """Set data to `data` directly, without any conversion"""
         self._data = data
 
-    def link(self, path):
+    def hardlink(self, path):
         """Hardlink if possible, otherwise softlink"""
-        self._data = Link(path)
+        self._data = Hardlink(path)
+
+    def softlink(self, path):
+        self._data = Softlink(path)
+
+    def junction(self, path):
+        self._data = Junction(path)
 
     def load(self, other):
         """Convert `other` to string"""
@@ -163,7 +169,9 @@ class DataTemplate(AbstractTemplate):
 
 # Source objects
 Copy = type('Copy', (AbstractSource,), {})
-Link = type('Link', (AbstractSource,), {})
+Hardlink = type('Hardlink', (AbstractSource,), {})
+Softlink = type('Softlink', (AbstractSource,), {})
+Junction = type('Junction', (AbstractSource,), {})
 
 
 class TemplateFactory:
@@ -211,15 +219,16 @@ class TemplateFactory:
         return path
 
 
-def getprotocol(url):
-    if url.startswith(constant.File):
-        return constant.File
+# def getprotocol(url):
+#     if url.startswith(constant.File):
+#         return constant.File
 
-    return None
+#     return None
 
 
 if __name__ == '__main__':
-    cpy = Copy(r's:\test')
-    link = Link(r's:\test')
+    cpy = Copy(r's:\test\image1.png')
+    hlink = Hardlink(r's:\test\image1.png')
+    slink = Softlink(r's:\test\image1.png')
 
-    print repr(link)
+    print repr(slink)

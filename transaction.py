@@ -1,3 +1,13 @@
+"""
+Protocols
+ - Disk
+ - Pipe
+ - Database
+ - Http
+ - Ftp
+
+"""
+
 import os
 import logging
 import shutil
@@ -21,20 +31,41 @@ def create(root):
         return
 
     if isinstance(root, template.DataTemplate):
-        data = root.data
+        data = root.get()
 
-        if isinstance(data, template.Link):
+        if isinstance(data, template.Hardlink):
             src = data.path
             dst = root.path
 
             try:
                 hardlink(src, dst)
-            except OSError:
-                softlink(src, dst)
-            except OSError:
-                raise OSError("Could not link %s" % src)
+            except (AttributeError, OSError) as e:
+                raise OSError("Could not create hardlink %s\n%s" % (src, e))
 
             log.info("Linked '%s' to '%s'" % (src, dst))
+
+        elif isinstance(data, template.Softlink):
+            src = data.path
+            dst = root.path
+
+            try:
+                softlink(src, dst)
+            except (AttributeError, OSError) as e:
+                raise OSError("Could not create softlink %s\n%s" % (src, e))
+
+            log.info("Linked '%s' to '%s'" % (src, dst))
+
+        elif isinstance(data, template.Junction):
+            src = data.path
+            dst = root.path
+
+            try:
+                junction(src, dst)
+            except (AttributeError, OSError) as e:
+                raise OSError("Could not create junction %s\n%s" % (src, e))
+
+            log.info("Linked '%s' to '%s'" % (src, dst))
+
 
         elif isinstance(data, template.Copy):
             src = data.path
@@ -46,6 +77,7 @@ def create(root):
                 raise e
 
             log.info("Copied '%s' to '%s'" % (src, dst))
+
 
         else:
             with open(root.path, 'w') as f:
