@@ -1,7 +1,6 @@
-from template import MetadataTemplate, ChannelTemplate, DataTemplate
-from transaction import create, read, update, delete
+from template import Metadata, Channel, Data
+from transaction import write, read, update, delete
 
-import constant
 import logging
 
 # Initiate logging for main level

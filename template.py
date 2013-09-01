@@ -4,20 +4,19 @@ import os
 import logging
 
 from interface import AbstractTemplate, AbstractSource
-import constant
 
 log = logging.getLogger('openmetadata.template')
 
-VERSION = '0.5'
+VERSION = '0.6'
 METANAME = '.meta'
 
 
-class MetadataTemplate(AbstractTemplate):
+class Metadata(AbstractTemplate):
 
-    log = logging.getLogger('openmetadata.template.MetadataTemplate')
+    log = logging.getLogger('openmetadata.template.Metadata')
 
     def __init__(self, path=METANAME, parent=None):
-        super(MetadataTemplate, self).__init__(path, parent)
+        super(Metadata, self).__init__(path, parent)
         self._children = []
 
         if isinstance(parent, AbstractTemplate):
@@ -64,16 +63,16 @@ class MetadataTemplate(AbstractTemplate):
         
         for child in os.listdir(other):
             path = os.path.join(self.path, child)
-            channel = ChannelTemplate(path)
+            channel = Channel(path)
             self.addchild(channel)
 
 
-class ChannelTemplate(AbstractTemplate):
+class Channel(AbstractTemplate):
 
-    log = logging.getLogger('openmetadata.template.ChannelTemplate')
+    log = logging.getLogger('openmetadata.template.Channel')
 
     def __init__(self, path, parent=None):
-        super(ChannelTemplate, self).__init__(path, parent)
+        super(Channel, self).__init__(path, parent)
 
         self._children = []
 
@@ -108,25 +107,28 @@ class ChannelTemplate(AbstractTemplate):
         return output
 
     def loadp(self, other):
+        print self.path
         for child in os.listdir(other):
             path = os.path.join(self.path, child)
             
             if os.path.isdir(path):
-                # A directory could only be a .meta folder
-                assert os.path.basename(path) == METANAME
+                if not os.path.basename(path) == METANAME:
+                    # Skip any folder other than the .meta folder
+                    log.warning("Non-metadata folder found: %s" % path)
+                    continue
 
-                child_object = MetadataTemplate(path)
+                child_object = Metadata(path)
             else:
                 # Otherwise it's a file which makes it a Data object
-                child_object = DataTemplate(path)
+                child_object = Data(path)
 
             self.addchild(child_object)
 
 
-class DataTemplate(AbstractTemplate):
+class Data(AbstractTemplate):
     def __init__(self, path, parent=None):
-        super(DataTemplate, self).__init__(path, parent)
-        self._data = str()
+        super(Data, self).__init__(path, parent)
+        self._input = None
 
         if isinstance(parent, AbstractTemplate):
             parent.addchild(self)
@@ -135,28 +137,28 @@ class DataTemplate(AbstractTemplate):
             self.loadp(self.path)
 
     def get(self):
-        return self._data
+        return self._input
 
     def set(self, data):
-        """Set data to `data` directly, without any conversion"""
-        self._data = data
+        """
+            Set data to `data` without any pre-processing
 
-    def hardlink(self, path):
-        """Hardlink if possible, otherwise softlink"""
-        self._data = Hardlink(path)
+            Advanced usage. This does not guarantee that object
+            can be written or later read via standard mechanisms
+            provided by openmetadata
 
-    def softlink(self, path):
-        self._data = Softlink(path)
+            You are recommended to use load() or any of the
+            convenience methods.
 
-    def junction(self, path):
-        self._data = Junction(path)
+        """
+        self._input = data
 
     def load(self, other):
         """Convert `other` to string"""
-        self._data = str(other)
+        self._input = str(other)
 
     def dump(self):
-        return self._data
+        return self._input
 
     def loadp(self, other):
         path = os.path.join(self.path, other)
@@ -166,12 +168,18 @@ class DataTemplate(AbstractTemplate):
             data = f.read()
             self.load(data)
 
+    def hardlink(self, path):
+        """Convenience method for set() using a Hardlink object"""
+        self._input = Hardlink(path)
 
-# Source objects
-Copy = type('Copy', (AbstractSource,), {})
-Hardlink = type('Hardlink', (AbstractSource,), {})
-Softlink = type('Softlink', (AbstractSource,), {})
-Junction = type('Junction', (AbstractSource,), {})
+    def softlink(self, path):
+        """Convenience method for set() using a Softlink object"""
+        self._input = Softlink(path)
+
+    def junction(self, path):
+        """Convenience method for set() using a Junction object"""
+        self._input = Junction(path)
+
 
 
 class TemplateFactory:
@@ -195,35 +203,59 @@ class TemplateFactory:
 
         if os.path.isdir(path):
             #
-            # MetadataTemplate
+            # Metadata
             # \.meta
             #
             if basename.startswith('.'):
-                return MetadataTemplate(path)
+                return Metadata(path)
             else:
                 parent_basename = os.path.basename(parent_path)
                 if parent_basename.startswith('.'):
                     #
-                    # ChannelTemplate
+                    # Channel
                     # \.meta\channel.txt
                     #
-                    return ChannelTemplate(path)
+                    return Channel(path)
 
         else:
             #
-            # DataTemplate
+            # Data
             # \.meta\channel.txt\data.txt
             # 
-            return DataTemplate(path)
+            return Data(path)
 
         return path
 
 
-# def getprotocol(url):
-#     if url.startswith(constant.File):
-#         return constant.File
+# Convenience method for use external to this module
+# 
+#    E.g.
+#       import template
+#       template.create(r'c:\path')
+create = TemplateFactory.create
 
-#     return None
+
+# Source Objects
+#
+# Used in Data and passed to write() which
+# determines how to process `path` of each source.
+#
+#   Copy        -- From any disk
+#   Hardlink    -- From local disk
+#   Softlink    -- From any disk
+#   Junction    -- from local disk
+#   Download    -- From http
+#   Stream      -- From pipe
+#   Fetch       -- From database
+
+Copy = type('Copy', (AbstractSource,), {})
+Hardlink = type('Hardlink', (AbstractSource,), {})
+Softlink = type('Softlink', (AbstractSource,), {})
+Junction = type('Junction', (AbstractSource,), {})
+Download = type('Download', (AbstractSource,), {})
+Stream = type('Stream', (AbstractSource,), {})
+Fetch = type('Fetch', (AbstractSource,), {})
+
 
 
 if __name__ == '__main__':

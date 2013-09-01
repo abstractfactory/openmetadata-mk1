@@ -1,12 +1,3 @@
-"""
-Protocols
- - Disk
- - Pipe
- - Database
- - Http
- - Ftp
-
-"""
 
 import os
 import logging
@@ -14,12 +5,11 @@ import shutil
 
 from interface import AbstractTemplate
 import template
-# import constant
 
 log = logging.getLogger('openmetadata.transaction')
 
 
-def create(root):
+def write(root):
     """Recursively create all metadata under `root`"""
 
     assert isinstance(root, AbstractTemplate)
@@ -30,7 +20,7 @@ def create(root):
         log.warning('"%s" already exists' % root)
         return
 
-    if isinstance(root, template.DataTemplate):
+    if isinstance(root, template.Data):
         data = root.get()
 
         if isinstance(data, template.Hardlink):
@@ -42,7 +32,7 @@ def create(root):
             except (AttributeError, OSError) as e:
                 raise OSError("Could not create hardlink %s\n%s" % (src, e))
 
-            log.info("Linked '%s' to '%s'" % (src, dst))
+            log.debug("Linked '%s' to '%s'" % (src, dst))
 
         elif isinstance(data, template.Softlink):
             src = data.path
@@ -53,7 +43,7 @@ def create(root):
             except (AttributeError, OSError) as e:
                 raise OSError("Could not create softlink %s\n%s" % (src, e))
 
-            log.info("Linked '%s' to '%s'" % (src, dst))
+            log.debug("Linked '%s' to '%s'" % (src, dst))
 
         elif isinstance(data, template.Junction):
             src = data.path
@@ -64,7 +54,7 @@ def create(root):
             except (AttributeError, OSError) as e:
                 raise OSError("Could not create junction %s\n%s" % (src, e))
 
-            log.info("Linked '%s' to '%s'" % (src, dst))
+            log.debug("Linked '%s' to '%s'" % (src, dst))
 
 
         elif isinstance(data, template.Copy):
@@ -76,14 +66,14 @@ def create(root):
             except OSError as e:
                 raise e
 
-            log.info("Copied '%s' to '%s'" % (src, dst))
+            log.debug("Copied '%s' to '%s'" % (src, dst))
 
 
         else:
             with open(root.path, 'w') as f:
                 f.write(data)
 
-            print "Wrote %s" % root
+            log.debug("Wrote %s" % root)
     else:
         os.mkdir(root.path)
 
@@ -91,19 +81,41 @@ def create(root):
 
         # Recursively create children
         for child in root.children:
-            create(child)
+            write(child)
         
 
 def read(root):
-    return {}
+    return template.create(root).dump()
 
 
-def update(channel):
-    print "Updating %r" % channel
+def update(root):
+    print "Updating %r" % root
 
 
-def delete(channel):
-    print "Deleted %r" % channel
+def delete(root):
+    assert os.path.exists(root)
+    assert os.path.isdir(root)
+
+    __remove = lambda: shutil.rmtree(root)
+
+    try:
+        __remove()
+    except WindowsError as e:
+        # Sometimes, Dropbox can bother this operation,
+        # creating files in the midst of deleting a
+        # folder.
+        #
+        # If this happens, try again in a short while.
+        import time
+        time.sleep(0.1)
+        log.debug("Slept before removing %s" % root)
+
+        try:
+            __remove()
+        except WindowsError as e:
+            raise e
+
+    log.debug("Removed %s" % root)
 
 
 # ------------------------------------

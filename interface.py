@@ -1,16 +1,22 @@
 
 import os
-from abc import ABCMeta, abstractmethod, abstractproperty
+from abc import ABCMeta, abstractmethod
 
 
 class AbstractTemplate:
-    """Abstract Baseclass to all objects in Open Metadata"""
+    """Abc to all objects in openmetadata"""
 
     __metaclass__ = ABCMeta
 
     @abstractmethod
     def __init__(self, path, parent):
-        self._path = path if not parent else os.path.join(str(parent), path)
+        path = path if not parent else os.path.join(str(parent), path)
+
+        # if os.path.isfile(path):
+        #     # Make ghost for file
+        #     host = os.path.dirname(path)
+
+        self._path = path
         self._parent = parent
 
     def __str__(self):
@@ -43,7 +49,6 @@ class AbstractTemplate:
         
         tablevel -= 1
 
-
         return output
 
     @property
@@ -75,10 +80,12 @@ class AbstractTemplate:
 
     @abstractmethod
     def dump(self):
+        """Return a dict of content"""
         pass
 
     @abstractmethod
     def load(self, other):
+        """Load object with content of identical type from `other`"""
         pass
 
 
