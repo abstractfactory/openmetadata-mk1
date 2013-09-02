@@ -1,4 +1,4 @@
-
+#!/usr/bin/python
 import os
 import sys
 import shutil
@@ -14,6 +14,16 @@ if not path in sys.path:
 root = os.path.join(package, 'test')
 
 import openmetadata as om
+
+
+def test_read():
+    path = os.path.join(root, 'persist')
+    metadata = om.read(path)
+    
+    for name, channel in metadata.iteritems():
+        print name
+        for key, value in channel.iteritems():
+            print "\t" + key
 
 
 def test_data():
@@ -220,9 +230,10 @@ def test_nonexisting_reference():
 
 
 if __name__ == '__main__':
-    import nose
-    nose.run(defaultTest=__name__)
+    # import nose
+    # nose.run(defaultTest=__name__)
     # print root
+    test_read()
     # test_data()
     # test_subchannel()
     # test_metadata_dump()

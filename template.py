@@ -107,7 +107,6 @@ class Channel(AbstractTemplate):
         return output
 
     def loadp(self, other):
-        print self.path
         for child in os.listdir(other):
             path = os.path.join(self.path, child)
             
@@ -169,15 +168,15 @@ class Data(AbstractTemplate):
             self.load(data)
 
     def hardlink(self, path):
-        """Convenience method for set() using a Hardlink object"""
+        """Convenience method for set() using `Hardlink`"""
         self._input = Hardlink(path)
 
     def softlink(self, path):
-        """Convenience method for set() using a Softlink object"""
+        """Convenience method for set() using `Softlink`"""
         self._input = Softlink(path)
 
     def junction(self, path):
-        """Convenience method for set() using a Junction object"""
+        """Convenience method for set() using `Junction`"""
         self._input = Junction(path)
 
 
@@ -224,7 +223,8 @@ class TemplateFactory:
             # 
             return Data(path)
 
-        return path
+        log.error("Could not find metadata at '%s'" % path)
+        return None
 
 
 # Convenience method for use external to this module

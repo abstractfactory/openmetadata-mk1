@@ -1,10 +1,12 @@
 # OpenMetadata
 
-A cross-platform, hierarchical [Metadata](http://en.wikipedia.org/wiki/Metadata) API for storing and accessing any [format](http://en.wikipedia.org/wiki/File_format) via any [protocol](http://en.wikipedia.org/wiki/Communications_protocol) of unlimited size and complexity. OM is part of the [Pipi](http://pipi.io) project and uses [Python](http://www.python.org) but is in itself language-agnostic and will be expanded upon to later support other languages as well. 
+A simple, cross-platform, hierarchical [Metadata](http://en.wikipedia.org/wiki/Metadata) API for storing and accessing any [format](http://en.wikipedia.org/wiki/File_format) via any [protocol](http://en.wikipedia.org/wiki/Communications_protocol) of unlimited size and complexity. OM is part of the [Pipi](http://pipi.io) project and uses [Python](http://www.python.org) but is in itself language-agnostic and will be expanded upon to later support other languages as well. 
 
-Care to help? Get in [contact](mailto:marcus@pipi.io)
+OpenMetadata is Open Source software and is licensed under the `MIT License`.
 
-### Example
+Care to help? Get in [contact](mailto:marcus@pipi.io).
+
+### Hello, World
 ~~~ python
 >>> import openmetadata as om
 >>> root = r'c:\folder'
@@ -20,16 +22,13 @@ Care to help? Get in [contact](mailto:marcus@pipi.io)
 # Created 'c:\folder\.meta\new_channel.txt\new_document.txt' with 'Hello World'
 ~~~
 
-### Resources
+### Links
 
-|                         |                                                   |
-|------------------------:|:--------------------------------------------------|
-|       **Website**:      | www.pipi.io                                       |
-|       **Blog**:         | www.pipi.io/blog                                  |
-|       **Facebook**:     | www.facebook.com/pipisoftware                     |
-|       **Twitter**:      | www.twitter.com/pipi_io                           |
-|       **Development**:  | http://github.com/mottosso/OpenMetadata           |
-|
+* www.pipi.io
+* www.pipi.io/blog
+* www.facebook.com/pipisoftware
+* www.twitter.com/pipi_io
+* http://github.com/mottosso/OpenMetadata
 
 ### License
 

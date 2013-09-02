@@ -77,7 +77,7 @@ def write(root):
     else:
         os.mkdir(root.path)
 
-        print "Created %s" % root
+        log.debug("Created %s" % root)
 
         # Recursively create children
         for child in root.children:
@@ -85,7 +85,8 @@ def write(root):
         
 
 def read(root):
-    return template.create(root).dump()
+    path = os.path.join(root, '.meta')
+    return template.create(path).dump()
 
 
 def update(root):
