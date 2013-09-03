@@ -75,7 +75,7 @@ Channels have a type too. For instance, channels of type ".txt" store plain-text
 
 
 The Five Tenets
-~~~~~~~~~~~~~~~
+---------------
 I'm built upon a slim specification. In whatever language you use to talk with me, these are some of the things I promise you:
  
 1. *The representation, manipulation and storage of metadata is not be tied to that of the content it describes.*
