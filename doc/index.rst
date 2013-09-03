@@ -1,7 +1,7 @@
 Welcome to the Open Metadata documentation
 ===========================================
 
-Hello. I'm a *simple*, cross-platform, hierarchical `metadata <http://en.wikipedia.org/wiki/Metadata>`_ API for storing and accessing various `formats <http://en.wikipedia.org/wiki/File_format>`_ via quite a few `protocols <http://en.wikipedia.org/wiki/Communications_protocol>`_ of any size and complexity you could think to throw at me. Oh, I'm also open source and `available on GitHub <https://github.com/mottosso/openmetadata>`_ under the `MIT license <http://opensource.org/licenses/MIT>`_.
+Hello. I'm a *simple*, cross-platform, hierarchical `metadata <http://en.wikipedia.org/wiki/Metadata>`_ API for storing and accessing various `formats <http://en.wikipedia.org/wiki/File_format>`_ via quite a few `protocols <http://en.wikipedia.org/wiki/Communications_protocol>`_ of any size and complexity via the file-system. Oh, I'm also open source and `available on GitHub <https://github.com/mottosso/openmetadata>`_ under the `MIT license <http://opensource.org/licenses/MIT>`_.
 
 I'm part of a `larger whole <http://pipi.io>`_. Here are some links.
 
@@ -26,6 +26,11 @@ I'm being tested using Python 2.6 and 2.7 under Linux (CentOS) and Windows (7) u
     >>> om.read(r'c:\my_project\my_asset')
     {'broadcast': {'message': 'hello, world'}}
 
+	| **Under construction**
+	| Note that the following pages are in the process of being written.
+	| If you are immediately interested, get in touch via marcus@pipi.io
+	| and we'll talk.
+
 How it works
 ~~~~~~~~~~~~
 Underneath 'my_asset' there is a folder. A special folder which this API writes and reads from. The name of this folder is not relevant (it's '.meta') but it's content are. Each piece of data within this folder corresponds to a "channel" (which are also folders).
@@ -36,18 +41,13 @@ That's right. "images". Not "image". That's because a JPEG is an image format, b
 
 So why are some channels groups of identical formats and some not? Because what matters to you as a programmer is not what file-protocol is being used to store your content. It is the content itself. OpenMetadata does not care about file-protocols, it cares about content. Specifically, about content after it has been read by whatever file-protocol or compression method hosted it.
 
-Discussion & Support
-~~~~~~~~~~~~~~~~~~~~~
-Whatever is troubling you, we can `talk about it <https://groups.google.com/forum/#!forum/open-metadata>`_. If you want, you can also `report an issue <https://github.com/mottosso/openmetadata/issues>`_.
-
-
 More
 ----
-I'm `Marcus <uk.linkedin.com/in/marcusottosson/>`_. An animation artist in the VFX industry with an interest in Pipeline development and write Python daily to solve my problems.
+I'm `Marcus <http://uk.linkedin.com/in/marcusottosson/>`_. An animation artist in the VFX industry with an interest in Pipeline development and write Python daily to solve my problems.
 
 Motivation
 ~~~~~~~~~~
-This is my motivation and goal with Open Metadata.
+Open Metadata is being developed as part of the Pipi project as a back-end to its metadata functionality. My goal is for this to become a common way in which we store and access metadata from our work in daily life, thus it's simplicity.
 
 Development Style
 ~~~~~~~~~~~~~~~~~
@@ -83,3 +83,7 @@ I'm built upon a slim specification. In whatever language you use to talk with m
 3. *The authoring and publication of metadata is be separable from its consumption.*
 4. *The metadata language has reflective abilities. It is be possible, from within the language, to view any metadata itself as content and thus be nested.*
 5. *It is be possible to aggregate two or more channels into a single channel or into a channel of channels.*
+
+Discussion & Support
+~~~~~~~~~~~~~~~~~~~~~
+Whatever is troubling you, we can `talk about it <https://groups.google.com/forum/#!forum/open-metadata>`_. If you want, you can also `report an issue <https://github.com/mottosso/openmetadata/issues>`_.

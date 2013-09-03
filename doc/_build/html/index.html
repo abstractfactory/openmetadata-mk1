@@ -71,7 +71,6 @@
 <li><a class="reference internal" href="#">Welcome to the Open Metadata documentation</a><ul>
 <li><a class="reference internal" href="#installation-hello-world">Installation &amp; Hello World</a><ul>
 <li><a class="reference internal" href="#how-it-works">How it works</a></li>
-<li><a class="reference internal" href="#discussion-support">Discussion &amp; Support</a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#more">More</a><ul>
@@ -82,7 +81,13 @@
 </li>
 </ul>
 </li>
-<li><a class="reference internal" href="#api-reference">API Reference</a></li>
+<li><a class="reference internal" href="#api-reference">API Reference</a><ul>
+<li><a class="reference internal" href="#the-five-tenets">The Five Tenets</a><ul>
+<li><a class="reference internal" href="#discussion-support">Discussion &amp; Support</a></li>
+</ul>
+</li>
+</ul>
+</li>
 </ul>
 </ul>
 </li>
@@ -119,7 +124,7 @@
       
   <div class="section" id="welcome-to-the-open-metadata-documentation">
 <h1>Welcome to the Open Metadata documentation<a class="headerlink" href="#welcome-to-the-open-metadata-documentation" title="Permalink to this headline">¶</a></h1>
-<p>Hello. I&#8217;m a <em>simple</em>, cross-platform, hierarchical <a class="reference external" href="http://en.wikipedia.org/wiki/Metadata">metadata</a> API for storing and accessing various <a class="reference external" href="http://en.wikipedia.org/wiki/File_format">formats</a> via quite a few <a class="reference external" href="http://en.wikipedia.org/wiki/Communications_protocol">protocols</a> of any size and complexity you could think to throw at me. Oh, I&#8217;m also open source and <a class="reference external" href="https://github.com/mottosso/openmetadata">available on GitHub</a> under the <a class="reference external" href="http://opensource.org/licenses/MIT">MIT license</a>.</p>
+<p>Hello. I&#8217;m a <em>simple</em>, cross-platform, hierarchical <a class="reference external" href="http://en.wikipedia.org/wiki/Metadata">metadata</a> API for storing and accessing various <a class="reference external" href="http://en.wikipedia.org/wiki/File_format">formats</a> via quite a few <a class="reference external" href="http://en.wikipedia.org/wiki/Communications_protocol">protocols</a> of any size and complexity via the file-system. Oh, I&#8217;m also open source and <a class="reference external" href="https://github.com/mottosso/openmetadata">available on GitHub</a> under the <a class="reference external" href="http://opensource.org/licenses/MIT">MIT license</a>.</p>
 <p>I&#8217;m part of a <a class="reference external" href="http://pipi.io">larger whole</a>. Here are some links.</p>
 <ul class="simple">
 <li>Website:      <a class="reference external" href="www.pipi.io">www.pipi.io</a></li>
@@ -138,6 +143,11 @@ $ python openmetadata/test.py</pre>
 <div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">openmetadata</span> <span class="kn">as</span> <span class="nn">om</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">om</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="s">r&#39;c:\my_project\my_asset&#39;</span><span class="p">)</span>
 <span class="go">{&#39;broadcast&#39;: {&#39;message&#39;: &#39;hello, world&#39;}}</span>
+
+<span class="go">    | **Under construction**</span>
+<span class="go">    | Note that the following pages are in the process of being written.</span>
+<span class="go">    | If you are immediately interested, get in touch via marcus@pipi.io</span>
+<span class="go">    | and we&#39;ll talk.</span>
 </pre></div>
 </div>
 <div class="section" id="how-it-works">
@@ -147,17 +157,13 @@ $ python openmetadata/test.py</pre>
 <p>That&#8217;s right. &#8220;images&#8221;. Not &#8220;image&#8221;. That&#8217;s because a JPEG is an image format, but so is PNG. A channel then may contain a variety of image formats, as long as they all conform to the more universal concept of being an image (a 2-dimensional grid of pixels).</p>
 <p>So why are some channels groups of identical formats and some not? Because what matters to you as a programmer is not what file-protocol is being used to store your content. It is the content itself. OpenMetadata does not care about file-protocols, it cares about content. Specifically, about content after it has been read by whatever file-protocol or compression method hosted it.</p>
 </div>
-<div class="section" id="discussion-support">
-<h3>Discussion &amp; Support<a class="headerlink" href="#discussion-support" title="Permalink to this headline">¶</a></h3>
-<p>Whatever is troubling you, we can <a class="reference external" href="https://groups.google.com/forum/#!forum/open-metadata">talk about it</a>. If you want, you can also <a class="reference external" href="https://github.com/mottosso/openmetadata/issues">report an issue</a>.</p>
-</div>
 </div>
 <div class="section" id="more">
 <h2>More<a class="headerlink" href="#more" title="Permalink to this headline">¶</a></h2>
-<p>I&#8217;m <a class="reference external" href="uk.linkedin.com/in/marcusottosson/">Marcus</a>. An animation artist in the VFX industry with an interest in Pipeline development and write Python daily to solve my problems.</p>
+<p>I&#8217;m <a class="reference external" href="http://uk.linkedin.com/in/marcusottosson/">Marcus</a>. An animation artist in the VFX industry with an interest in Pipeline development and write Python daily to solve my problems.</p>
 <div class="section" id="motivation">
 <h3>Motivation<a class="headerlink" href="#motivation" title="Permalink to this headline">¶</a></h3>
-<p>This is my motivation and goal with Open Metadata.</p>
+<p>Open Metadata is being developed as part of the Pipi project as a back-end to its metadata functionality. My goal is for this to become a common way in which we store and access metadata from our work in daily life, thus it&#8217;s simplicity.</p>
 </div>
 <div class="section" id="development-style">
 <h3>Development Style<a class="headerlink" href="#development-style" title="Permalink to this headline">¶</a></h3>
@@ -179,6 +185,8 @@ $ python openmetadata/test.py</pre>
 $ \parent_folder\.meta\channel_2</pre>
 </div>
 <p>Channels have a type too. For instance, channels of type &#8221;.txt&#8221; store plain-text documents while &#8221;.img&#8221; store images of any format. This separation is for your convenience and designed to be relevant in building graphical interfaces that presents and manipulates this data, such as <a class="reference external" href="http://pipi.io/about">About</a></p>
+<div class="section" id="the-five-tenets">
+<h2>The Five Tenets<a class="headerlink" href="#the-five-tenets" title="Permalink to this headline">¶</a></h2>
 <p>I&#8217;m built upon a slim specification. In whatever language you use to talk with me, these are some of the things I promise you:</p>
 <ol class="arabic simple">
 <li><em>The representation, manipulation and storage of metadata is not be tied to that of the content it describes.</em></li>
@@ -187,6 +195,11 @@ $ \parent_folder\.meta\channel_2</pre>
 <li><em>The metadata language has reflective abilities. It is be possible, from within the language, to view any metadata itself as content and thus be nested.</em></li>
 <li><em>It is be possible to aggregate two or more channels into a single channel or into a channel of channels.</em></li>
 </ol>
+<div class="section" id="discussion-support">
+<h3>Discussion &amp; Support<a class="headerlink" href="#discussion-support" title="Permalink to this headline">¶</a></h3>
+<p>Whatever is troubling you, we can <a class="reference external" href="https://groups.google.com/forum/#!forum/open-metadata">talk about it</a>. If you want, you can also <a class="reference external" href="https://github.com/mottosso/openmetadata/issues">report an issue</a>.</p>
+</div>
+</div>
 </div>
 
 
