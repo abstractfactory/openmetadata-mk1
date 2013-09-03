@@ -68,11 +68,21 @@
                 <li class="dropdown">
   <a href="#" class="dropdown-toggle" data-toggle="dropdown">Page <b class="caret"></b></a>
   <ul class="dropdown-menu localtoc"><ul>
-<li><a class="reference internal" href="#">Welcome to the Open Metadata documentation</a></li>
-<li><a class="reference internal" href="#installation">Installation</a></li>
-<li><a class="reference internal" href="#hello-world">Hello, World</a></li>
-<li><a class="reference internal" href="#the-five-tenets">The Five Tenets</a></li>
-<li><a class="reference internal" href="#discussion-and-support">Discussion and Support</a></li>
+<li><a class="reference internal" href="#">Welcome to the Open Metadata documentation</a><ul>
+<li><a class="reference internal" href="#installation-hello-world">Installation &amp; Hello World</a><ul>
+<li><a class="reference internal" href="#how-it-works">How it works</a></li>
+<li><a class="reference internal" href="#discussion-support">Discussion &amp; Support</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#more">More</a><ul>
+<li><a class="reference internal" href="#motivation">Motivation</a></li>
+<li><a class="reference internal" href="#development-style">Development Style</a></li>
+<li><a class="reference internal" href="#style-guide-for-contributors">Style Guide for Contributors</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a class="reference internal" href="#api-reference">API Reference</a></li>
 </ul>
 </ul>
 </li>
@@ -109,8 +119,8 @@
       
   <div class="section" id="welcome-to-the-open-metadata-documentation">
 <h1>Welcome to the Open Metadata documentation<a class="headerlink" href="#welcome-to-the-open-metadata-documentation" title="Permalink to this headline">¶</a></h1>
-<p>Hello. I&#8217;m a simple, cross-platform, hierarchical <a class="reference external" href="http://en.wikipedia.org/wiki/Metadata">metadata</a> API for storing and accessing various <a class="reference external" href="http://en.wikipedia.org/wiki/File_format">formats</a> via quite a few <a class="reference external" href="http://en.wikipedia.org/wiki/Communications_protocol">protocols</a> of any size and complexity you could think to throw at me. Oh, I&#8217;m also open source and <a class="reference external" href="https://github.com/mottosso/openmetadata">available on GitHub</a> under the MIT license.</p>
-<p>Here&#8217;s something for you.</p>
+<p>Hello. I&#8217;m a <em>simple</em>, cross-platform, hierarchical <a class="reference external" href="http://en.wikipedia.org/wiki/Metadata">metadata</a> API for storing and accessing various <a class="reference external" href="http://en.wikipedia.org/wiki/File_format">formats</a> via quite a few <a class="reference external" href="http://en.wikipedia.org/wiki/Communications_protocol">protocols</a> of any size and complexity you could think to throw at me. Oh, I&#8217;m also open source and <a class="reference external" href="https://github.com/mottosso/openmetadata">available on GitHub</a> under the <a class="reference external" href="http://opensource.org/licenses/MIT">MIT license</a>.</p>
+<p>I&#8217;m part of a <a class="reference external" href="http://pipi.io">larger whole</a>. Here are some links.</p>
 <ul class="simple">
 <li>Website:      <a class="reference external" href="www.pipi.io">www.pipi.io</a></li>
 <li>Blog:         <a class="reference external" href="www.pipi.io/blog">www.pipi.io/blog</a></li>
@@ -118,44 +128,65 @@
 <li>Twitter:      <a class="reference external" href="www.twitter.com/pipi_io">www.twitter.com/pipi_io</a></li>
 <li>Development:  <a class="reference external" href="github.com/mottosso/OpenMetadata">github.com/mottosso/OpenMetadata</a></li>
 </ul>
-</div>
-<div class="section" id="installation">
-<h1>Installation<a class="headerlink" href="#installation" title="Permalink to this headline">¶</a></h1>
-<p>I run great using Python 2.6 and 2.7 under Linux (CentOS) and Windows (7). I&#8217;d also like <a class="reference external" href="https://pypi.python.org/pypi/nose/1.3.0">nose</a> for my tests:</p>
+<p>Care to help? Get <a class="reference external" href="mailto:marcus&#37;&#52;&#48;pipi&#46;io">in touch</a>.</p>
+<div class="section" id="installation-hello-world">
+<h2>Installation &amp; Hello World<a class="headerlink" href="#installation-hello-world" title="Permalink to this headline">¶</a></h2>
+<p>I&#8217;m being tested using Python 2.6 and 2.7 under Linux (CentOS) and Windows (7) using <a class="reference external" href="https://pypi.python.org/pypi/nose/1.3.0">nose</a>:</p>
 <div class="highlight-python"><pre>$ git clone https://github.com/mottosso/openmetadata.git
-$ ./openmetadata/test.py</pre>
+$ python openmetadata/test.py</pre>
 </div>
-</div>
-<div class="section" id="hello-world">
-<h1>Hello, World<a class="headerlink" href="#hello-world" title="Permalink to this headline">¶</a></h1>
 <div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">openmetadata</span> <span class="kn">as</span> <span class="nn">om</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">root</span> <span class="o">=</span> <span class="s">r&#39;c:\folder&#39;</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">metadata</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">Metadata</span><span class="p">(</span><span class="n">parent</span><span class="o">=</span><span class="n">root</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">channel</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">Channel</span><span class="p">(</span><span class="s">&#39;new_channel.txt&#39;</span><span class="p">,</span> <span class="n">parent</span><span class="o">=</span><span class="n">metadata</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">data</span> <span class="o">=</span> <span class="n">om</span><span class="o">.</span><span class="n">Data</span><span class="p">(</span><span class="s">&#39;new_document.txt&#39;</span><span class="p">,</span> <span class="n">parent</span><span class="o">=</span><span class="n">channel</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">data</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s">&#39;Hello World&#39;</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">om</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">metadata</span><span class="p">)</span>
-<span class="go"># Created &#39;c:\folder\.meta&#39;</span>
-<span class="go"># Created &#39;c:\folder\.meta\new_channel.txt&#39;</span>
-<span class="go"># Created &#39;c:\folder\.meta\new_channel.txt\new_document.txt&#39; with &#39;Hello World&#39;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">om</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="s">r&#39;c:\my_project\my_asset&#39;</span><span class="p">)</span>
+<span class="go">{&#39;broadcast&#39;: {&#39;message&#39;: &#39;hello, world&#39;}}</span>
 </pre></div>
 </div>
+<div class="section" id="how-it-works">
+<h3>How it works<a class="headerlink" href="#how-it-works" title="Permalink to this headline">¶</a></h3>
+<p>Underneath &#8216;my_asset&#8217; there is a folder. A special folder which this API writes and reads from. The name of this folder is not relevant (it&#8217;s &#8216;.meta&#8217;) but it&#8217;s content are. Each piece of data within this folder corresponds to a &#8220;channel&#8221; (which are also folders).</p>
+<p>A channel is a group. A collection. It contains data of similar types, such as plain text documents, JSON files or images.</p>
+<p>That&#8217;s right. &#8220;images&#8221;. Not &#8220;image&#8221;. That&#8217;s because a JPEG is an image format, but so is PNG. A channel then may contain a variety of image formats, as long as they all conform to the more universal concept of being an image (a 2-dimensional grid of pixels).</p>
+<p>So why are some channels groups of identical formats and some not? Because what matters to you as a programmer is not what file-protocol is being used to store your content. It is the content itself. OpenMetadata does not care about file-protocols, it cares about content. Specifically, about content after it has been read by whatever file-protocol or compression method hosted it.</p>
 </div>
-<div class="section" id="the-five-tenets">
-<h1>The Five Tenets<a class="headerlink" href="#the-five-tenets" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="discussion-support">
+<h3>Discussion &amp; Support<a class="headerlink" href="#discussion-support" title="Permalink to this headline">¶</a></h3>
+<p>Whatever is troubling you, we can <a class="reference external" href="https://groups.google.com/forum/#!forum/open-metadata">talk about it</a>. If you want, you can also <a class="reference external" href="https://github.com/mottosso/openmetadata/issues">report an issue</a>.</p>
+</div>
+</div>
+<div class="section" id="more">
+<h2>More<a class="headerlink" href="#more" title="Permalink to this headline">¶</a></h2>
+<p>I&#8217;m <a class="reference external" href="uk.linkedin.com/in/marcusottosson/">Marcus</a>. An animation artist in the VFX industry with an interest in Pipeline development and write Python daily to solve my problems.</p>
+<div class="section" id="motivation">
+<h3>Motivation<a class="headerlink" href="#motivation" title="Permalink to this headline">¶</a></h3>
+<p>This is my motivation and goal with Open Metadata.</p>
+</div>
+<div class="section" id="development-style">
+<h3>Development Style<a class="headerlink" href="#development-style" title="Permalink to this headline">¶</a></h3>
+<p>This project is being built upon by a proprietary project being developed on the side.</p>
+</div>
+<div class="section" id="style-guide-for-contributors">
+<h3>Style Guide for Contributors<a class="headerlink" href="#style-guide-for-contributors" title="Permalink to this headline">¶</a></h3>
+<p>PEP-08</p>
+</div>
+</div>
+</div>
+<div class="section" id="api-reference">
+<h1>API Reference<a class="headerlink" href="#api-reference" title="Permalink to this headline">¶</a></h1>
+<p>Care to know a secret?</p>
+<p>I am three. We are Metadata, Channel and Data. We live together in hierarchies. Metadata is the parent of Channel and Data is its child.</p>
+<p>[uml image here]</p>
+<p>The metadata lies hidden in your folders under the name &#8221;.meta&#8221; and it hosts one or more channels, like this:</p>
+<div class="highlight-python"><pre>$ \parent_folder\.meta\channel_1
+$ \parent_folder\.meta\channel_2</pre>
+</div>
+<p>Channels have a type too. For instance, channels of type &#8221;.txt&#8221; store plain-text documents while &#8221;.img&#8221; store images of any format. This separation is for your convenience and designed to be relevant in building graphical interfaces that presents and manipulates this data, such as <a class="reference external" href="http://pipi.io/about">About</a></p>
 <p>I&#8217;m built upon a slim specification. In whatever language you use to talk with me, these are some of the things I promise you:</p>
 <ol class="arabic simple">
-<li><em>The representation, manipulation and storage of metadata should not be tied to that of the content it describes.</em></li>
-<li><em>The metadata support referencing (cross-channel, user, time etc.) as well as many types of data formats, including text, images, video, key/value pairs etc.</em></li>
-<li><em>The authoring and publication of metadata should be separable from its consumption.</em></li>
-<li><em>The metadata language should have reflective abilities. It should be possible, from within the language, to view metadata itself as content and thus be combined into hierarchies.</em></li>
-<li><em>It should be possible to aggregate two or more channels into a single channel or into a channel of channels.</em></li>
+<li><em>The representation, manipulation and storage of metadata is not be tied to that of the content it describes.</em></li>
+<li><em>The metadata supports referencing (cross-channel, user, time etc.) as well as many types of data formats, including text, images, video, key/value pairs etc.</em></li>
+<li><em>The authoring and publication of metadata is be separable from its consumption.</em></li>
+<li><em>The metadata language has reflective abilities. It is be possible, from within the language, to view any metadata itself as content and thus be nested.</em></li>
+<li><em>It is be possible to aggregate two or more channels into a single channel or into a channel of channels.</em></li>
 </ol>
-</div>
-<div class="section" id="discussion-and-support">
-<h1>Discussion and Support<a class="headerlink" href="#discussion-and-support" title="Permalink to this headline">¶</a></h1>
-<p>Whatever is troubling you, we can <a class="reference external" href="https://groups.google.com/forum/#!forum/open-metadata">talk about it</a>. If you want, you can also report anything you find odd <a class="reference external" href="https://github.com/mottosso/openmetadata/issues">here</a>.</p>
-<p>When you&#8217;re ready to take a leap of faith, just know that I&#8217;m available under the <a class="reference external" href="http://opensource.org/licenses/MIT">MIT License</a>.</p>
 </div>
 
 
