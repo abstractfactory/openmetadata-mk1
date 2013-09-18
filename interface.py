@@ -7,14 +7,11 @@ class AbstractTemplate:
     """Abc to all objects in openmetadata"""
 
     __metaclass__ = ABCMeta
+    _parentobj = None
 
     @abstractmethod
     def __init__(self, path, parent):
         path = path if not parent else os.path.join(str(parent), path)
-
-        # if os.path.isfile(path):
-        #     # Make ghost for file
-        #     host = os.path.dirname(path)
 
         self._path = path
         self._parent = parent
@@ -24,6 +21,10 @@ class AbstractTemplate:
 
     def __repr__(self):
         return u"%s(%r)" % (self.__class__.__name__, self.__str__())
+
+    @property
+    def version(self):
+        return Version(0, 7, 0)
 
     def dir(self, tablevel=-1):
         """
@@ -53,22 +54,59 @@ class AbstractTemplate:
 
     @property
     def name(self):
+        """
+        Return basename.
+
+        Post-condition:
+            - Output must include extension.
+
+        """
+
         basename = os.path.basename(self._path)
+        
+        # ASSERT START
         name, ext = os.path.splitext(basename)
-        return name
+        assert ext
+        # ASSERT END
+
+        return basename
 
     @property
     def path(self):
+        """
+        Return full path
+
+        Taking parent into account, return the full path
+        to self.
+
+        """
+        
         path = self._path
         if self.parent:
             path = os.path.join(str(self.parent), path)
 
-        # path += self._path
         return path
 
     @property
     def exists(self):
         return os.path.exists(self._path)
+
+    # @property
+    # def parent(self):
+    #     """
+    #     Lazy instantiation of parent
+
+    #     If no parent exists, return None
+    #     If parent exists, and isinstance(AbstractTemplate), return parent
+    #     If parent exists and isinstance(basestring), convert and return
+
+    #     """
+    #     parent = self._parent
+    #     if parent:
+    #         if not isinstance(parent, AbstractTemplate):
+    #             parent = self._parentobj(os.path.dirname(self.path))
+
+    #     return parent
 
     @property
     def parent(self):
@@ -108,3 +146,23 @@ class AbstractSource(object):
     @property
     def path(self):
         return self._path
+
+
+class Version(object):
+    """Based on API Design for C++ page 244"""
+    def __init__(self, major, minor, patch):
+        self.major = major
+        self.minor = minor
+        self.patch = patch
+
+    def __str__(self):
+        return "%s.%s.%s" % (self.major, self.minor, self.patch)
+
+    def __repr__(self):
+        return u"%s(%r)" % (self.__class__.__name__, self.__str__())
+
+    def isatleast(self, major=int(), minor=int(), patch=int()):
+        raise NotImplementedError
+
+    def hasfeature(self, name=str()):
+        raise NotImplementedError

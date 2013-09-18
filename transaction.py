@@ -1,3 +1,16 @@
+"""
+Input/Output module for Open Metadata
+
+    Created: 2013-09-01
+    Author: Marcus Ottosson
+    Email: marcus@pipi.io
+
+Usage:
+
+    >>> test()
+
+"""
+
 
 import os
 import logging
@@ -28,7 +41,7 @@ def write(root):
             dst = root.path
 
             try:
-                hardlink(src, dst)
+                _hardlink(src, dst)
             except (AttributeError, OSError) as e:
                 raise OSError("Could not create hardlink %s\n%s" % (src, e))
 
@@ -39,7 +52,7 @@ def write(root):
             dst = root.path
 
             try:
-                softlink(src, dst)
+                _softlink(src, dst)
             except (AttributeError, OSError) as e:
                 raise OSError("Could not create softlink %s\n%s" % (src, e))
 
@@ -50,7 +63,7 @@ def write(root):
             dst = root.path
 
             try:
-                junction(src, dst)
+                _junction(src, dst)
             except (AttributeError, OSError) as e:
                 raise OSError("Could not create junction %s\n%s" % (src, e))
 
@@ -85,58 +98,82 @@ def write(root):
         
 
 def read(root):
-    path = os.path.join(root, '.meta')
-    return template.create(path).dump()
+    """Return metadata hierarchy as dict"""
+    metadata_root = os.path.join(root, '.meta')
+    if not os.path.exists(metadata_root):
+        log.error("No metadata found under %s" % metadata_root)
+        return {}
+
+    return _hierarchy_as_dict(metadata_root)
+
 
 
 def update(root):
     print "Updating %r" % root
 
 
-def delete(root):
+def delete(root, max_retries=10):
     assert os.path.exists(root)
     assert os.path.isdir(root)
 
-    __remove = lambda: shutil.rmtree(root)
-
-    try:
-        __remove()
-    except WindowsError as e:
-        # Sometimes, Dropbox can bother this operation,
-        # creating files in the midst of deleting a
-        # folder.
-        #
-        # If this happens, try again in a short while.
-        import time
-        time.sleep(0.1)
-        log.debug("Slept before removing %s" % root)
-
+    retries = 0
+    while True:
         try:
-            __remove()
+            shutil.rmtree(root)
+            break
         except WindowsError as e:
-            raise e
+            # Sometimes, Dropbox can bother this operation;
+            # creating files in the midst of deleting a folder.
+            #
+            # If this happens, try again in a short while.
+            
+            retries += 1
+            if retries > max_retries:
+                log.error(e)
+                break
+
+            import time
+            time.sleep(0.1)
+            log.debug("Retired %i time(s) for %s" % (retries, root))
+
 
     log.debug("Removed %s" % root)
 
 
+def _hierarchy_as_dict(root):
+    """Return a dict of folders and files under `root`"""
+    hier = {}
+    root = root.rstrip(os.sep)
+    start = root.rfind(os.sep) + 1
+    for path, dirs, files in os.walk(root):
+        folders = path[start:].split(os.sep)
+        subdir = files or {}  # Files are entered as lists
+        parent = reduce(dict.get, folders[:-1], hier)
+        parent[folders[-1]] = subdir
+    return hier
+
 # ------------------------------------
 
 
-def hardlink(src, dst):
+def _hardlink(src, dst):
     import ctypes
     if not ctypes.windll.kernel32.CreateHardLinkA(dst, src, 0): 
         raise OSError("Could not hardlink '%s' to '%s'" % (src, dst))
 
 
-def softlink(src, dst):
+def _softlink(src, dst):
     return
 
 
-def junction(src, dst):
+def _junction(src, dst):
     return
 
 
 if __name__ == '__main__':
-    src = r'S:\research\beast\openmetadata\api\image1.png'
-    dst = r'S:\research\beast\openmetadata\api\hardlinked_image1.png'
-    # os.link(src, dst)
+    # import sys
+    import openmetadata as om
+
+    package = os.getcwd()
+    root = os.path.join(package, 'test')
+
+    print om.read(root)

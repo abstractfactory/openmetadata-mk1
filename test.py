@@ -17,6 +17,7 @@ import openmetadata as om
 
 
 def test_read():
+    """Test"""
     path = os.path.join(root, 'persist')
     metadata = om.read(path)
     
@@ -232,7 +233,8 @@ def test_nonexisting_reference():
 if __name__ == '__main__':
     # import nose
     # nose.run(defaultTest=__name__)
-    # print root
+    # metadata = om.Metadata(parent=root)
+    # print metadata
     test_read()
     # test_data()
     # test_subchannel()

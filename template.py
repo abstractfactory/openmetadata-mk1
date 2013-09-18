@@ -7,7 +7,7 @@ from interface import AbstractTemplate, AbstractSource
 
 log = logging.getLogger('openmetadata.template')
 
-VERSION = '0.6'
+VERSION = '0.7.0'
 METANAME = '.meta'
 
 
@@ -48,14 +48,17 @@ class Metadata(AbstractTemplate):
 
     def dump(self):
         """
-        Serialize each channel into dict of strings.
+        Serialize each child into string dictionary.
 
-        {channel_name: {data_name: data_value}}
+        {"channel_name": {"data_name": "data_value"}}
+
+        *Children are guaranteed to be of type AbstractTemplate,
+        thus we can call .name on it.
 
         """
         output = {}
         for child in self.children:
-            output[str(child)] = child.dump()
+            output[child.name] = child.dump()
         return output
 
     def loadp(self, other):
@@ -70,6 +73,8 @@ class Metadata(AbstractTemplate):
 class Channel(AbstractTemplate):
 
     log = logging.getLogger('openmetadata.template.Channel')
+
+    # _parentobj = Metadata
 
     def __init__(self, path, parent=None):
         super(Channel, self).__init__(path, parent)
@@ -102,8 +107,9 @@ class Channel(AbstractTemplate):
 
     def dump(self):
         output = {}
+
         for child in self.children:
-            output[str(child)] = child.dump()
+            output[child.name] = child.dump()
         return output
 
     def loadp(self, other):
@@ -125,6 +131,11 @@ class Channel(AbstractTemplate):
 
 
 class Data(AbstractTemplate):
+
+    log = logging.getLogger('openmetadata.template.Data')
+
+    # _parentobj = Channel
+    
     def __init__(self, path, parent=None):
         super(Data, self).__init__(path, parent)
         self._input = None
@@ -143,11 +154,11 @@ class Data(AbstractTemplate):
             Set data to `data` without any pre-processing
 
             Advanced usage. This does not guarantee that object
-            can be written or later read via standard mechanisms
-            provided by openmetadata
+            can be written or later read via provided standard 
+            mechanisms.
 
             You are recommended to use load() or any of the
-            convenience methods.
+            other convenience methods.
 
         """
         self._input = data
@@ -225,6 +236,15 @@ class TemplateFactory:
 
         log.error("Could not find metadata at '%s'" % path)
         return None
+        
+
+# def getparent(obj):
+#     """Return appropriate parent of `obj`"""
+#     if isinstance(obj, Channel):
+#         return Metadata
+#     if isinstance(obj, Data):
+#         return Channel
+#     raise TypeError("%r has no determined parent" % obj)
 
 
 # Convenience method for use external to this module

@@ -1,17 +1,48 @@
+| Note: This is **alpha** software and is not guaranteed to remain unchanged
+
 Welcome to the Open Metadata documentation
 ===========================================
 
-Hello. I'm a *simple*, cross-platform, hierarchical `metadata <http://en.wikipedia.org/wiki/Metadata>`_ API for storing and accessing various `formats <http://en.wikipedia.org/wiki/File_format>`_ via quite a few `protocols <http://en.wikipedia.org/wiki/Communications_protocol>`_ of any size and complexity via the file-system. Oh, I'm also open source and `available on GitHub <https://github.com/mottosso/openmetadata>`_ under the `MIT license <http://opensource.org/licenses/MIT>`_.
-
-I'm part of a `larger whole <http://pipi.io>`_. Here are some links.
-
-* Website:      `<www.pipi.io>`_
-* Blog:         `<www.pipi.io/blog>`_
-* Facebook:     `<www.facebook.com/pipisoftware>`_
-* Twitter:      `<www.twitter.com/pipi_io>`_
-* Development:  `<github.com/mottosso/OpenMetadata>`_
+Hello. I'm a *simple*, cross-platform, hierarchical metadata API for storing and accessing various formats via quite a few protocols of any size and complexity via your file-system. Oh, I'm also open source and `available on GitHub <https://github.com/mottosso/openmetadata>`_ under the `MIT license <http://opensource.org/licenses/MIT>`_.
 
 Care to help? Get `in touch <marcus@pipi.io>`_.
+
+Currently
+----------
+Making a graphical front-end which will help determine how things are accesses and used. Expect substantial changes to happen during this period.
+
+.. image:: currently.png
+
+Calling for
+~~~~~~~~~~~
+Review, developers and testers. I've been at this development for quite some time and now I need your help. Being my first open source project, have a look through the code and let me know of anything you find odd or would like to help with. Including how you see the division of modules and code in general being appropriate for distributed work on github.
+
+I'm looking to develop the technique in some more languages. Notably C# and Lua due to myself being involved in the developemnt of film and games and the three languages being the most commonly used. Eventually there will be room for C/C++ and other lower-level languages too. The point is, the techinque is what matters and thus exposing it to as many languages as possble is to be one of the major subjects of development.
+
+Motivation
+-----------
+I set out developing an efficient way to store, retrieve and otherwise manipulate metadata by researching what was being done currently and found that this wheel is constantly being re-invented. The reason for this I believe lies in the simple fact that the concept of metadata is poorly defined and understood, so lets start out by defining it.
+
+"Data about data"
+~~~~~~~~~~~~~~~~~~
+
+Thats right. Thats all it is. Simple right? 
+
+Well, no. What is "data"?
+
+* `Text? <http://media.npr.org/assets/img/2013/06/19/istock_000018865341large-b25b5ec24a67b7c6f1e4cd830f7024f2edda78bc-s6-c30.jpg>`_
+* `Binary file-format propertes? <http://i.msdn.microsoft.com/dynimg/IC534518.png>`_
+* `Cells in a database? <https://support.shotgunsoftware.com/entries/24806218-query-various-values-names>`_
+
+The definition of "data" in Open Metadata is *"anything that is a file"* and thus the definition of metadata becomes *"files about files"*.
+
+
+This narrows it down a bit, but lets not stop there. Data may be abstract. A collection of pictures can be referred to as a "group" of those pictures. This "group" may also contain metadata. Luckily, abstract content is well defined in any file-system. It is the common folder.
+
+A Common Folder
+~~~~~~~~~~~~~~~~~~
+OM stores metadata as-is. Rather than converting, re-locating and linking or otherwise simplifying the data about data, OM stores it in a folder just underneath its parent.
+
 
 Installation & Hello World
 --------------------------
@@ -45,10 +76,6 @@ More
 ----
 I'm `Marcus <http://uk.linkedin.com/in/marcusottosson/>`_. An animation artist in the VFX industry with an interest in Pipeline development and write Python daily to solve my problems.
 
-Motivation
-~~~~~~~~~~
-Open Metadata is being developed as part of the Pipi project as a back-end to its metadata functionality. My goal is for this to become a common way in which we store and access metadata from our work in daily life, thus it's simplicity.
-
 Development Style
 ~~~~~~~~~~~~~~~~~
 This project is being built upon by a proprietary project being developed on the side.
@@ -56,6 +83,31 @@ This project is being built upon by a proprietary project being developed on the
 Style Guide for Contributors
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 PEP-08
+
+# Single leading underscore for private members
+
+Good example
+ 	_private_variable
+
+ Bad example
+  	private_variable
+  	__private_variable
+
+# Plural for modules
+
+A module containing one or more objects ends with "s"
+
+This is due to singular names being more useful in code, 
+e.g. channel.py conflicts with use of channel as a variable.
+
+Reasoning for using singular is when using in code, channel.TextChannel is nicer
+than channels.TextChannel as it may seem as though TextChannel is a multple.
+
+Good example
+channels.py
+
+Bad example
+channel.py
 
 
 API Reference

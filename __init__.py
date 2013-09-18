@@ -1,4 +1,4 @@
-from template import Metadata, Channel, Data
+from template import Metadata, Channel, Data, TemplateFactory
 from transaction import write, read, update, delete
 
 import logging
