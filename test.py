@@ -1,247 +1,177 @@
 #!/usr/bin python
+
+from __future__ import absolute_import
+
 import os
-import sys
-import shutil
-
 from nose.tools import *
-
-package = os.path.dirname(__file__)
-path = os.path.dirname(package)
-
-if not path in sys.path:
-    sys.path.insert(0, path)
-
-root = os.path.join(package, 'test')
 
 import openmetadata as om
 
+cwd = os.getcwd()
+root = os.path.join(cwd, 'test')
+dynamic = os.path.join(root, 'dynamic')
+persist = os.path.join(root, 'persist')
 
-def test_read():
-    """Test"""
-    path = os.path.join(root, 'persist')
-    metadata = om.read(path)
+
+def test_children():
+    """Children are returned as appropriate objects"""
+    folder1 = om.instance.Folder(persist)
+
+
+def test_om_read():
+    """`om.read()` convenience method"""
+    metadata = om.read(persist)
+    assert_is_instance(metadata, dict)
+
+
+def test_om_write():
+    """`om.write()` convenience method"""
+    om.write(dynamic, 'some text')
+
+
+# def test_om_update():
+#     """`om.read()` convenience method"""
+#     existing_file = os.path.join(persist, r'.meta\chan.txt\document.txt')
+#     om.update(existing_file, 'updated data!')
+
+
+def test_om_delete():
+    """`om.delete()` convenience method"""
+    meta = om.template.Folder(os.path.join(dynamic, om.constant.Meta))
+    chan = om.template.Channel('chan.txt', parent=meta)
+    file = om.template.File('document.txt', parent=chan)
     
-    for name, channel in metadata.iteritems():
-        print name
-        for key, value in channel.iteritems():
-            print "\t" + key
+    data = 'some text'
+
+    file.setdata(data)
+    file.write()
+
+    om.delete(meta.path)
 
 
-def test_data():
-    """New Metadata, Channel and Data"""
+def test_read_channel():
+    """Read channel directly"""
+    chan = os.path.join(persist, '.meta', 'chan.txt')
 
-    metadata = om.Metadata(parent=root)
+    channel = om.instance.create(chan)
 
-    channel = om.Channel('chan.txt', parent=metadata)
+    assert_is_instance(channel, om.instance.Channel)
+    assert_is_instance(channel.read(), dict)
+    # {'document1.txt': "This is some data here"}
+
+
+def test_full_template():
+    """New metadata from scratch using templates"""
+
+    meta = om.template.Folder(os.path.join(dynamic, om.constant.Meta))
+    chan = om.template.Channel('chan.txt', parent=meta)
+    file = om.template.File('document.txt', parent=chan)
     
-    data = om.Data('text.txt', parent=channel)
-    data.load('some text')
+    data = 'some text'
 
-    # print metadata.dir()
+    file.setdata(data)
+    file.write()
 
-    om.write(metadata)
+    # Read it back in
+    instance = om.instance.create(file.path)
+    assert_equals(instance.read(), data)
 
-    # assert_equal(om.read(root), metadata.dump())
+    om.delete(meta.path)
 
-    om.delete(metadata.path)
+
+def test_append_file_to_existing():
+    """Append file to existing channel"""
+
+    meta = om.instance.Folder(os.path.join(persist, om.constant.Meta))
+    channel = meta.children[0]
+        
+    data = "new content"
+
+    file_template = om.template.File('appended.txt', channel)
+    file_template.setdata(data)
+    file_template.write()
+
+    # Read it back in
+    file_instance = om.instance.create(file_template.path)
+    assert_is_instance(file_instance, om.instance.File)
+    assert_equals(file_instance.read(), data)
+
+    om.delete(file_instance.path)
+
+
+def test_append_metadata_to_channel():
+    """Append metadata to existing channel"""
+
+    meta = om.instance.Folder(os.path.join(persist, om.constant.Meta))
+    channel = meta.children[0]
+
+    submeta = om.template.Folder('.meta', parent=channel)
+    subchannel = om.template.Channel('subchan.txt', parent=submeta)
+
+    data = 'some text'
+
+    file = om.template.File('text.txt', parent=subchannel)
+    file.setdata(data)
+    file.write()
+
+    # Read it back in
+    file_instance = om.instance.create(file.path)
+    assert_is_instance(file_instance, om.instance.File)
+    assert_equals(file_instance.read(), data)
+
+    om.delete(file_instance.path)
+
+
+def test_hardlink_reference():
+    """Create metadata using Hardlink reference"""
+
+    meta = om.template.Folder(os.path.join(dynamic, om.constant.Meta))
+    chan = om.template.Channel('chan.img', parent=meta)
+    file = om.template.File('image1.png', parent=chan)
     
-    # Output:
-    # Created s:\test\.meta
-    # Created s:\test\.meta\chan.txt
-    # Wrote s:\test\.meta\chan.txt\text.txt
-    # Removed s:\test\.meta
+    img = os.path.join(root, 'image1.png')
+    data = om.reference.Hardlink(img)
+
+    file.setdata(data)
+    file.write()
+
+    # Read it back in
+    instance = om.instance.create(file.path)
+    assert_equals(instance.read(), file.path)
+
+    om.delete(meta.path)
 
 
-def test_subchannel():
-    """Channel within Channel"""
+def test_copy_reference():
+    """Create metadata using Copy reference"""
 
-    metadata = om.Metadata(parent=root)
-
-    channel = om.Channel('newchannel.txt', parent=metadata)
-
-    submeta = om.Metadata(parent=channel)
-    subchannel = om.Channel('newsubchannel.txt', parent=submeta)
-
-    # Text is explicit, as they are not preceeded with any protocol
-    data1 = om.Data('text', parent=channel)
-    data1.load('some text')
-
-    # Images are implicit, since they are preceeded with a protocol
-    data2 = om.Data('text2', parent=subchannel)
-    data2.load('some more text')
-
-    # print metadata.dir()
-    om.write(metadata)
-
-    shutil.rmtree(metadata.path)
-    print "Removed %s" % metadata.path
-
-    # Output:
-    # Created s:\test\.meta
-    # Created s:\test\.meta\newchannel.txt
-    # Wrote s:\test\.meta\newchannel.txt\text.txt
-    # Created s:\test\.meta\newchannel.txt\newsubchannel.img
-    # Hardlinked 's:\test\image1.png' to 's:\test\.meta\newchannel.txt\newsubchannel.img\image1.png'
-
-def test_metadata():
-    """New Metadata"""
-
-    metadata = om.Metadata(parent=root)
-
-    om.write(metadata)
-
-    shutil.rmtree(metadata.path)
-    print "Removed %s" % metadata.path
-
-    # Output:
-    # Created 's:\test\.meta'
-
-
-def test_metadata_dump():
-    """Dump metadata"""
+    meta = om.template.Folder(os.path.join(dynamic, om.constant.Meta))
+    chan = om.template.Channel('chan.img', parent=meta)
+    file = om.template.File('image1.png', parent=chan)
     
-    if not os.name == 'nt':
-        return
+    img = os.path.join(root, 'image1.png')
+    data = om.reference.Copy(img)
 
-    metadata = om.Metadata(parent=root)
+    file.setdata(data)
+    file.write()
 
-    channel = om.Channel('chan.txt', parent=metadata)
-    
-    data = om.Data('text.txt', parent=channel)
-    data.load('some text')
+    # Read it back in
+    instance = om.instance.create(file.path)
+    assert_equals(instance.read(), file.path)
 
-    assert_is_instance(metadata.dump(), dict)
-
-
-def test_metadata_load():
-    """Load metadata"""
-    metadata = om.Metadata(parent=root)
-
-    channel1 = om.Channel('chan1.txt', parent=metadata)
-    channel2 = om.Channel('chan2.txt', parent=metadata)
-    
-    data = om.Data('text.txt', parent=channel1)
-    data.load('some text')
-
-    data2 = om.Data('text2.txt', parent=channel2)
-    data2.load('some text')
-
-    # output = {'s:\\test\\.meta\\chan1.txt': {'s:\\test\\.meta\\chan1.txt\\text.txt': 'some text'}, 's:\\test\\.meta\\chan2.txt': {}}
-
-    before = metadata.dump()
-    metadata.load(metadata.dump())
-    after = metadata.dump()
-
-    assert_equals(before, after)
-
-
-def test_load():
-    """Load existing path"""
-
-    existing_meta = om.Metadata(parent=root)
-    existing_meta.dir()
-    
-    # Name           Format      Path
-    # meta
-    #   channel1     txt         s:/test/.meta/channel1.txt
-    #       data1    txt         s:/text/.meta/
-    # channel2       img         s:/test/.meta/channel2.img
-    # channel3       vid         s:/test/.meta/channel3.vid
-    
-def test_link_versus_set():
-    """Hardlink versus Set
-
-    Ensure that setting data to a Link object directly is the
-    same as using link() with a path
-
-    """
-
-    metadata = om.Metadata(parent=root)
-
-    channel = om.Channel('chan.img', parent=metadata)
-    
-    linked = om.Data('image1.png', parent=channel)
-    linked.hardlink(os.path.join(root, 'image1.png'))
-
-    link = om.template.Hardlink(os.path.join(root, 'image1.png'))
-    manual = om.Data('image1.png', parent=channel)
-    manual.set(link)
-
-    assert_equals(linked.get(), manual.get())
-
-
-def test_link():
-    """Link to binary file"""
-    metadata = om.Metadata(parent=root)
-
-    channel = om.Channel('chan.img', parent=metadata)
-    
-    source = os.path.join(root, 'image1.png')
-    linked = om.Data('image1.png', parent=channel)
-    linked.hardlink(source)
-
-    om.write(metadata)
-
-    shutil.rmtree(metadata.path)
-    print "Removed %s" % metadata.path
-
-
-# def test_file_metadata():
-#     """New metadata to file"""
-
-#     root = r'C:\studio\appdata\scripts\python\openmetadata\test\image1.png'
-#     metadata = om.Metadata(parent=root)
-
-# def test_reference_http():
-#     # Reference a file from the internet
-    
-#     root = r's:\root'
-    
-#     metadata = om.Metadata(parent=root)
-
-#     chan = om.ChannelReference(name='channel1.bin', parent=metadata)
-
-#     data = om.Data(name='index.html', parent=chan)
-#     data.copy('http://pipi.io/index.html')
-    
-#     om.write(metadata)
-#     print "Removed %s" % metadata.path
-    
-    # Created 's:/root/.meta
-    # Created 's:/root/.meta/channel1.png
-    # Copied 's:/root/.meta/channel1.png/data1.png'
-
-    
-# def test_root_ftp():
-#     pass
-    
-# def test_reference_to_incompatible_channel():
-#     # Try loading a file via reference into a text channel
-#     pass
-    
-def test_nonexisting_reference():
-    """Load non-existing reference"""
-
-
-# def test_txt():
-#     pass
-
-# def test_img():
-#     pass
+    om.delete(meta.path)
 
 
 if __name__ == '__main__':
     # import nose
     # nose.run(defaultTest=__name__)
-    # metadata = om.Metadata(parent=root)
+    # metadata = om.Folder(parent=root)
     # print metadata
-    test_read()
-    # test_data()
-    # test_subchannel()
-    # test_metadata_dump()
-    # test_metadata_load()
-    # test_load()
-    # test_link_versus_manual()
-    # test_dump()
-    # test_txt()
-    # test_img()
+    test_children()
+    # test_om_read()
+    # test_om_write()
+    # test_full_template()
+    # test_append_file_to_existing()
+    # test_append_metadata_to_channel()
+    # test_hardlink_reference()
+    # test_copy_reference()

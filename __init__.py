@@ -1,7 +1,11 @@
-from template import Metadata, Channel, Data, TemplateFactory
+from template import Folder, Channel, File
 from transaction import write, read, update, delete
+import constant, instance, format, reference
 
 import logging
+import sys
+
+sys.dont_write_bytecode = True
 
 # Initiate logging for main level
 log = logging.getLogger('openmetadata')

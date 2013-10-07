@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>openmetadata.template &mdash; Open Metadata 0.6 documentation</title>
+    <title>openmetadata.template &mdash; Open Folder 0.6 documentation</title>
     
     <link rel="stylesheet" href="../../_static/default.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
@@ -24,7 +24,7 @@
     <script type="text/javascript" src="../../_static/underscore.js"></script>
     <script type="text/javascript" src="../../_static/doctools.js"></script>
     <link rel="author" title="About these documents" href="../../about.html" />
-    <link rel="top" title="Open Metadata 0.6 documentation" href="../../index.html" />
+    <link rel="top" title="Open Folder 0.6 documentation" href="../../index.html" />
     <link rel="up" title="Module code" href="../index.html" /> 
   </head>
   <body>
@@ -37,7 +37,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../index.html">Open Metadata 0.6 documentation</a> &raquo;</li>
+        <li><a href="../../index.html">Open Folder 0.6 documentation</a> &raquo;</li>
           <li><a href="../index.html" accesskey="U">Module code</a> &raquo;</li> 
       </ul>
     </div>  
@@ -61,12 +61,12 @@
 <span class="n">METANAME</span> <span class="o">=</span> <span class="s">&#39;.meta&#39;</span>
 
 
-<span class="k">class</span> <span class="nc">Metadata</span><span class="p">(</span><span class="n">AbstractTemplate</span><span class="p">):</span>
+<span class="k">class</span> <span class="nc">Folder</span><span class="p">(</span><span class="n">AbstractTemplate</span><span class="p">):</span>
 
-    <span class="n">log</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s">&#39;openmetadata.template.Metadata&#39;</span><span class="p">)</span>
+    <span class="n">log</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s">&#39;openmetadata.template.Folder&#39;</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="o">=</span><span class="n">METANAME</span><span class="p">,</span> <span class="n">parent</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
-        <span class="nb">super</span><span class="p">(</span><span class="n">Metadata</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">parent</span><span class="p">)</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">Folder</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">parent</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_children</span> <span class="o">=</span> <span class="p">[]</span>
 
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">parent</span><span class="p">,</span> <span class="n">AbstractTemplate</span><span class="p">):</span>
@@ -167,7 +167,7 @@
                     <span class="n">log</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s">&quot;Non-metadata folder found: </span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="n">path</span><span class="p">)</span>
                     <span class="k">continue</span>
 
-                <span class="n">child_object</span> <span class="o">=</span> <span class="n">Metadata</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+                <span class="n">child_object</span> <span class="o">=</span> <span class="n">Folder</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="c"># Otherwise it&#39;s a file which makes it a Data object</span>
                 <span class="n">child_object</span> <span class="o">=</span> <span class="n">Data</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
@@ -237,7 +237,7 @@
 <span class="sd">    based on the following set of rules.</span>
 
 <span class="sd">    Rules:</span>
-<span class="sd">        - Metadata is preceded by a dot</span>
+<span class="sd">        - Folder is preceded by a dot</span>
 <span class="sd">        - Channels are any folder with an extension</span>
 <span class="sd">        - Data are files</span>
 
@@ -253,11 +253,11 @@
 
         <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isdir</span><span class="p">(</span><span class="n">path</span><span class="p">):</span>
             <span class="c">#</span>
-            <span class="c"># Metadata</span>
+            <span class="c"># Folder</span>
             <span class="c"># \.meta</span>
             <span class="c">#</span>
             <span class="k">if</span> <span class="n">basename</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s">&#39;.&#39;</span><span class="p">):</span>
-                <span class="k">return</span> <span class="n">Metadata</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+                <span class="k">return</span> <span class="n">Folder</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">parent_basename</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">parent_path</span><span class="p">)</span>
                 <span class="k">if</span> <span class="n">parent_basename</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s">&#39;.&#39;</span><span class="p">):</span>
@@ -347,7 +347,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../index.html">Open Metadata 0.6 documentation</a> &raquo;</li>
+        <li><a href="../../index.html">Open Folder 0.6 documentation</a> &raquo;</li>
           <li><a href="../index.html" >Module code</a> &raquo;</li> 
       </ul>
     </div>

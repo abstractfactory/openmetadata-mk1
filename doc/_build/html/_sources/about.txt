@@ -3,7 +3,7 @@ About
 
 Here are some things to help clear your vision about what you are looking at.
 
-The highest level mantra of Open Metadata is "Keep Data Together"
+The highest level mantra of Open Folder is "Keep Data Together"
 
 Why
 ------------------
@@ -21,11 +21,11 @@ Not only that, but most software provide different levels of flexibility and a r
 
 But how can you make use of this data once it's been put there?
 
-Open Metadata is an attempt to alleviate some of the re-inventing going on as well as unifying the read/write of this data so as to be useful outside of their target application.
+Open Folder is an attempt to alleviate some of the re-inventing going on as well as unifying the read/write of this data so as to be useful outside of their target application.
 
 Screw that
 ----------
 
 You may use it to store information about content anywhere a folder can exist.
 
-Open Metadata is type-agnostic, meaning it doesn't care about the type in which you store your data. Be it a line of text about your music collection, documentation about your code or images about production work such as shots and assets.
+Open Folder is type-agnostic, meaning it doesn't care about the type in which you store your data. Be it a line of text about your music collection, documentation about your code or images about production work such as shots and assets.

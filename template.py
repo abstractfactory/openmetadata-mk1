@@ -1,33 +1,104 @@
-"""Creation objects for metadata"""
+"""Templates are temporary, editable elements on in memory.
+
+Templates correlates to each Instance object, which are used for reading,
+and provides the writing mechanisms.
+
+
+"""
 
 import os
 import logging
+from abc import ABCMeta, abstractmethod
 
-from interface import AbstractTemplate, AbstractSource
+from openmetadata import format
+# from openmetadata import constant
 
 log = logging.getLogger('openmetadata.template')
 
-VERSION = '0.7.0'
-METANAME = '.meta'
+VERSION = '0.14.0'
 
 
-class Metadata(AbstractTemplate):
+class BaseClass:
+    """Abc to all templates in openmetadata"""
 
-    log = logging.getLogger('openmetadata.template.Metadata')
+    __metaclass__ = ABCMeta
 
-    def __init__(self, path=METANAME, parent=None):
-        super(Metadata, self).__init__(path, parent)
+    @abstractmethod
+    def __init__(self, path, parent=None):
+        self._path = path
+        self._parent = parent
         self._children = []
 
-        if isinstance(parent, AbstractTemplate):
+        if hasattr(parent, 'addchild'):
             parent.addchild(self)
 
-        if os.path.exists(self.path):
-            self.loadp(self.path)
+    def __str__(self):
+        return self.path
+
+    def __repr__(self):
+        return u"%s.%s(%r)" % (__name__, self.__class__.__name__, self.__str__())
+
+    def dir(self, tablevel=-1):
+        """
+        Depth-first directory listing.
+
+        Todo: 
+            - Make it Breadth-first, otherwise, children
+            get put in an awkward position
+
+        """
+
+        output     = ""
+        tablevel += 1
+        
+        for i in range(tablevel):
+            output += " "
+        
+        output += "-o " + os.path.basename(self.path) + "\t" + self.path + "\n"
+
+        for child in self._children:
+            output += child.dir(tablevel)
+        
+        tablevel -= 1
+
+        return output
+
+    @property
+    def path(self):
+        """
+        Return full path
+
+        Taking parent into account, return the full path
+        to self.
+
+        """
+        
+        path = self._path
+        if self.parent:
+            path = os.path.join(self.parent.path, path)
+
+        return path
 
     @property
     def children(self):
         return self._children
+
+    @property
+    def parent(self):
+        return self._parent
+
+    def setparent(self, parent):
+        parent._children.append(self)
+        self._parent = parent
+
+
+class Folder(BaseClass):
+    """Temporary placeholder for future Folder instance"""
+
+    log = logging.getLogger('openmetadata.template.Folder')
+
+    def __init__(self, path, parent=None):
+        super(Folder, self).__init__(path, parent)
 
     def addchild(self, child):
         self._children.append(child)
@@ -35,252 +106,102 @@ class Metadata(AbstractTemplate):
 
     def removechild(self, child):
         self._children.remove(child)
-
-        if child._parent == self:
-            child._parent = None
-
-    def load(self, other):
-        """Add channels from dict"""
-        # for meta, 
-
-        for key, value in other.iteritems():
-            print key, value
-
-    def dump(self):
-        """
-        Serialize each child into string dictionary.
-
-        {"channel_name": {"data_name": "data_value"}}
-
-        *Children are guaranteed to be of type AbstractTemplate,
-        thus we can call .name on it.
-
-        """
-        output = {}
-        for child in self.children:
-            output[child.name] = child.dump()
-        return output
-
-    def loadp(self, other):
-        """Load metadata from path"""
-        
-        for child in os.listdir(other):
-            path = os.path.join(self.path, child)
-            channel = Channel(path)
-            self.addchild(channel)
+        child._parent = None
 
 
-class Channel(AbstractTemplate):
+class Channel(BaseClass):
+    """Temporary placeholder for future Channel instance"""
 
     log = logging.getLogger('openmetadata.template.Channel')
-
-    # _parentobj = Metadata
 
     def __init__(self, path, parent=None):
         super(Channel, self).__init__(path, parent)
 
-        self._children = []
-
-        if isinstance(parent, AbstractTemplate):
-            parent.addchild(self)
-
-        if os.path.exists(self.path):
-            self.loadp(self.path)
-
-    @property
-    def children(self):
-        return self._children
-
     def addchild(self, child):
         self._children.append(child)
-
         child._parent = self
 
     def removechild(self, child):
         self._children.remove(child)
-
         child._parent = None
 
-    def load(self, other):
-        for key, value in other.iteritems():
-            print key, value
 
-    def dump(self):
-        output = {}
+class File(BaseClass):
+    """Editable File object
 
-        for child in self.children:
-            output[child.name] = child.dump()
-        return output
-
-    def loadp(self, other):
-        for child in os.listdir(other):
-            path = os.path.join(self.path, child)
-            
-            if os.path.isdir(path):
-                if not os.path.basename(path) == METANAME:
-                    # Skip any folder other than the .meta folder
-                    log.warning("Non-metadata folder found: %s" % path)
-                    continue
-
-                child_object = Metadata(path)
-            else:
-                # Otherwise it's a file which makes it a Data object
-                child_object = Data(path)
-
-            self.addchild(child_object)
-
-
-class Data(AbstractTemplate):
-
-    log = logging.getLogger('openmetadata.template.Data')
-
-    # _parentobj = Channel
-    
-    def __init__(self, path, parent=None):
-        super(Data, self).__init__(path, parent)
-        self._input = None
-
-        if isinstance(parent, AbstractTemplate):
-            parent.addchild(self)
-
-        if os.path.exists(self.path):
-            self.loadp(self.path)
-
-    def get(self):
-        return self._input
-
-    def set(self, data):
-        """
-            Set data to `data` without any pre-processing
-
-            Advanced usage. This does not guarantee that object
-            can be written or later read via provided standard 
-            mechanisms.
-
-            You are recommended to use load() or any of the
-            other convenience methods.
-
-        """
-        self._input = data
-
-    def load(self, other):
-        """Convert `other` to string"""
-        self._input = str(other)
-
-    def dump(self):
-        return self._input
-
-    def loadp(self, other):
-        path = os.path.join(self.path, other)
-        assert os.path.isfile(path)
-
-        with open(path, 'r') as f:
-            data = f.read()
-            self.load(data)
-
-    def hardlink(self, path):
-        """Convenience method for set() using `Hardlink`"""
-        self._input = Hardlink(path)
-
-    def softlink(self, path):
-        """Convenience method for set() using `Softlink`"""
-        self._input = Softlink(path)
-
-    def junction(self, path):
-        """Convenience method for set() using `Junction`"""
-        self._input = Junction(path)
-
-
-
-class TemplateFactory:
-    """Given an existing path, return the appropriate template
-    based on the following set of rules.
-
-    Rules:
-        - Metadata is preceded by a dot
-        - Channels are any folder with an extension
-        - Data are files
+    User edits this objects and then writes to disk using its
+    own .write() method.
 
     """
 
-    @classmethod
-    def create(cls, path):
-        if not os.path.exists(path):
-            raise OSError("'%s' did not exist" % path)
+    log = logging.getLogger('openmetadata.template.File')
+    
+    def __init__(self, path, parent=None):
+        super(File, self).__init__(path, parent)
+        self._data = None
 
-        basename = os.path.basename(path)
-        parent_path = os.path.dirname(path)
+    @property
+    def data(self):
+        return self._data
 
-        if os.path.isdir(path):
-            #
-            # Metadata
-            # \.meta
-            #
-            if basename.startswith('.'):
-                return Metadata(path)
-            else:
-                parent_basename = os.path.basename(parent_path)
-                if parent_basename.startswith('.'):
-                    #
-                    # Channel
-                    # \.meta\channel.txt
-                    #
-                    return Channel(path)
+    def setdata(self, data):
+        self._data = data
 
+    def write(self):
+        data = self._data
+
+        if not data:
+            raise ValueError("No data to be written")
+
+        if not self._parent:
+            raise ValueError("No parent set")
+
+        # Write references
+        if hasattr(data, 'write'):
+            return data.write(self.path)
+
+        # Otherwise, grab a writer
+        writer = format.create(self._path)
+        if hasattr(writer, 'write'):
+            parent = self.parent
+            if not os.path.exists(parent.path):
+                os.makedirs(parent.path)
+
+            output_path = writer.write(self.path, self.data)
+
+            self.log.debug("Successfully wrote to %s" % self.path)
         else:
-            #
-            # Data
-            # \.meta\channel.txt\data.txt
-            # 
-            return Data(path)
+            self.log.warning("No writer found for %s" % self.path)
 
-        log.error("Could not find metadata at '%s'" % path)
-        return None
-        
-
-# def getparent(obj):
-#     """Return appropriate parent of `obj`"""
-#     if isinstance(obj, Channel):
-#         return Metadata
-#     if isinstance(obj, Data):
-#         return Channel
-#     raise TypeError("%r has no determined parent" % obj)
-
-
-# Convenience method for use external to this module
-# 
-#    E.g.
-#       import template
-#       template.create(r'c:\path')
-create = TemplateFactory.create
-
-
-# Source Objects
-#
-# Used in Data and passed to write() which
-# determines how to process `path` of each source.
-#
-#   Copy        -- From any disk
-#   Hardlink    -- From local disk
-#   Softlink    -- From any disk
-#   Junction    -- from local disk
-#   Download    -- From http
-#   Stream      -- From pipe
-#   Fetch       -- From database
-
-Copy = type('Copy', (AbstractSource,), {})
-Hardlink = type('Hardlink', (AbstractSource,), {})
-Softlink = type('Softlink', (AbstractSource,), {})
-Junction = type('Junction', (AbstractSource,), {})
-Download = type('Download', (AbstractSource,), {})
-Stream = type('Stream', (AbstractSource,), {})
-Fetch = type('Fetch', (AbstractSource,), {})
-
+        return output_path
 
 
 if __name__ == '__main__':
-    cpy = Copy(r's:\test\image1.png')
-    hlink = Hardlink(r's:\test\image1.png')
-    slink = Softlink(r's:\test\image1.png')
+    from openmetadata import instance
 
-    print repr(slink)
+    cwd = os.getcwd()
+    root = os.path.join(cwd, 'test', '.meta')
+    
+    # New everything
+    meta = Folder(root, parent=None)
+    channel = Channel('chanx.txt', parent=meta)
+    file = File('document.txt', parent=channel)
+    file.setdata('written via python, yet again')
+    # file.write()
+
+    # Append to existing
+    meta = instance.Folder(root)
+    channel = meta.children[0]
+    print channel.children
+    file_instance = channel.children[0]
+    
+    # convert to template
+    file_template = File(file_instance.path, channel)
+
+    # repeat it 5 times
+    data = file_instance.read().values()[0]
+    data += "\n" + data
+
+    file_template.setdata(data)
+
+    # file_template.write()

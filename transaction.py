@@ -1,5 +1,5 @@
 """
-Input/Output module for Open Metadata
+Input/Output module for Open Folder
 
     Created: 2013-09-01
     Author: Marcus Ottosson
@@ -11,115 +11,74 @@ Usage:
 
 """
 
+from __future__ import absolute_import
 
 import os
 import logging
 import shutil
 
-from interface import AbstractTemplate
-import template
+from openmetadata import instance
+from openmetadata import template
+
 
 log = logging.getLogger('openmetadata.transaction')
 
 
-def write(root):
-    """Recursively create all metadata under `root`"""
+def write(root, data):
+    """Convenience method for writing metadata"""
+    
+    # root = os.path.join(root, '.meta')
 
-    assert isinstance(root, AbstractTemplate)
-    assert root.parent is not None
-    assert os.path.exists( str(root.parent) )
+    if isinstance(data, basestring):
+        # String are written as plain-text
+        meta = template.Folder(root)
 
-    if root.exists:
-        log.warning('"%s" already exists' % root)
-        return
+        # New channel
+        chan = template.Channel('untitled.txt', meta)
+        file = template.File('untitled.txt', chan)
+        file.setdata(data)
 
-    if isinstance(root, template.Data):
-        data = root.get()
+        return file.write()
 
-        if isinstance(data, template.Hardlink):
-            src = data.path
-            dst = root.path
+    if isinstance(data, dict):
+        meta = template.Folder(root)
 
-            try:
-                _hardlink(src, dst)
-            except (AttributeError, OSError) as e:
-                raise OSError("Could not create hardlink %s\n%s" % (src, e))
+        # New channel
+        chan = template.Channel('untitled.kvs', meta)
+        file = template.File('untitled.json', chan)
+        file.setdata(data)
 
-            log.debug("Linked '%s' to '%s'" % (src, dst))
+        return file.write()
 
-        elif isinstance(data, template.Softlink):
-            src = data.path
-            dst = root.path
-
-            try:
-                _softlink(src, dst)
-            except (AttributeError, OSError) as e:
-                raise OSError("Could not create softlink %s\n%s" % (src, e))
-
-            log.debug("Linked '%s' to '%s'" % (src, dst))
-
-        elif isinstance(data, template.Junction):
-            src = data.path
-            dst = root.path
-
-            try:
-                _junction(src, dst)
-            except (AttributeError, OSError) as e:
-                raise OSError("Could not create junction %s\n%s" % (src, e))
-
-            log.debug("Linked '%s' to '%s'" % (src, dst))
+    raise ValueError('Failed to write "%r" to "%s"' % (data, root))
 
 
-        elif isinstance(data, template.Copy):
-            src = data.path
-            dst = root.path
+def update(root, data):
+    """Convenience method for updating metadata"""
 
-            try:
-                shutil.copy(src, dst)
-            except OSError as e:
-                raise e
-
-            log.debug("Copied '%s' to '%s'" % (src, dst))
-
-
-        else:
-            with open(root.path, 'w') as f:
-                f.write(data)
-
-            log.debug("Wrote %s" % root)
-    else:
-        os.mkdir(root.path)
-
-        log.debug("Created %s" % root)
-
-        # Recursively create children
-        for child in root.children:
-            write(child)
-        
 
 def read(root):
-    """Return metadata hierarchy as dict"""
-    metadata_root = os.path.join(root, '.meta')
-    if not os.path.exists(metadata_root):
-        log.error("No metadata found under %s" % metadata_root)
+    """Convenience method for reading metadata"""
+    # root = os.path.join(root, '.meta')
+
+    if not os.path.exists(root):
+        log.warning('"%s" not found' % root)
         return {}
 
-    return _hierarchy_as_dict(metadata_root)
-
-
-
-def update(root):
-    print "Updating %r" % root
+    item = instance.Folder(root)
+    return item.read()
 
 
 def delete(root, max_retries=10):
     assert os.path.exists(root)
-    assert os.path.isdir(root)
 
     retries = 0
     while True:
         try:
-            shutil.rmtree(root)
+            if os.path.isdir(root):
+                shutil.rmtree(root)
+            else:
+                os.remove(root)
             break
         except WindowsError as e:
             # Sometimes, Dropbox can bother this operation;
@@ -140,40 +99,25 @@ def delete(root, max_retries=10):
     log.debug("Removed %s" % root)
 
 
-def _hierarchy_as_dict(root):
-    """Return a dict of folders and files under `root`"""
-    hier = {}
-    root = root.rstrip(os.sep)
-    start = root.rfind(os.sep) + 1
-    for path, dirs, files in os.walk(root):
-        folders = path[start:].split(os.sep)
-        subdir = files or {}  # Files are entered as lists
-        parent = reduce(dict.get, folders[:-1], hier)
-        parent[folders[-1]] = subdir
-    return hier
-
-# ------------------------------------
+# def _hardlink(src, dst):
+#     if not ctypes.windll.kernel32.CreateHardLinkA(dst, src, 0): 
+#         raise OSError("Could not hardlink '%s' to '%s'" % (src, dst))
 
 
-def _hardlink(src, dst):
-    import ctypes
-    if not ctypes.windll.kernel32.CreateHardLinkA(dst, src, 0): 
-        raise OSError("Could not hardlink '%s' to '%s'" % (src, dst))
+# def _softlink(src, dst):
+#     return
 
 
-def _softlink(src, dst):
-    return
+# def _junction(src, dst):
+#     return
 
-
-def _junction(src, dst):
-    return
 
 
 if __name__ == '__main__':
-    # import sys
     import openmetadata as om
 
     package = os.getcwd()
     root = os.path.join(package, 'test')
 
+    print "Reading: %s " % root
     print om.read(root)

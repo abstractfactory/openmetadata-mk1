@@ -1,6 +1,6 @@
 | Note: This is **alpha** software and is not guaranteed to remain unchanged
 
-Welcome to the Open Metadata documentation
+Welcome to the Open Folder documentation
 ===========================================
 
 Hello. I'm a *simple*, cross-platform, hierarchical metadata API for storing and accessing various formats via quite a few protocols of any size and complexity via your file-system. Oh, I'm also open source and `available on GitHub <https://github.com/mottosso/openmetadata>`_ under the `MIT license <http://opensource.org/licenses/MIT>`_.
@@ -34,14 +34,14 @@ Well, no. What is data?
 * `Binary file-format propertes? <http://i.msdn.microsoft.com/dynimg/IC534518.png>`_
 * `Cells in a database? <https://support.shotgunsoftware.com/entries/24806218-query-various-values-names>`_
 
-The definition of "data" in Open Metadata is *"anything that is a file"* and thus the definition of metadata becomes *"files about files"*.
+The definition of "data" in Open Folder is *"anything that is a file"* and thus the definition of metadata becomes *"files about files"*.
 
 
 This narrows it down a bit, but lets not stop there. Data may be abstract. A collection of pictures can be referred to as a "group" of those pictures. This "group" may also contain metadata. Luckily, abstract content is well defined in any file-system. It is the common folder.
 
 The Common Folder
 ~~~~~~~~~~~~~~~~~~
-Folders are at the heart of Open Metadata. Rather than storing metadata separately or internally, you could store it as-is together with the content.
+Folders are at the heart of Open Folder. Rather than storing metadata separately or internally, you could store it as-is together with the content.
 
 
 Installation & Hello World
@@ -70,7 +70,7 @@ A channel is a group. A collection. It contains data of similar types, such as p
 
 That's right. "images". Not "image". That's because a JPEG is an image format, but so is PNG. A channel then may contain a variety of image formats, as long as they all conform to the more universal concept of being an image (a 2-dimensional grid of pixels).
 
-So why are some channels groups of identical formats and some not? Because what matters to you as a programmer is not what file-protocol is being used to store your content. It is the content itself. OpenMetadata does not care about file-protocols, it cares about content. Specifically, about content after it has been read by whatever file-protocol or compression method hosted it.
+So why are some channels groups of identical formats and some not? Because what matters to you as a programmer is not what file-protocol is being used to store your content. It is the content itself. OpenFolder does not care about file-protocols, it cares about content. Specifically, about content after it has been read by whatever file-protocol or compression method hosted it.
 
 More
 ----
@@ -89,7 +89,7 @@ API Reference
 ==============
 Care to know a secret?
 
-I am three. We are Metadata, Channel and Data. We live together in hierarchies. Metadata is the parent of Channel and Data is its child.
+I am three. We are Folder, Channel and Data. We live together in hierarchies. Folder is the parent of Channel and Data is its child.
 
 [uml image here]
 

@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Welcome to the Open Metadata documentation &mdash; Open Metadata 0.6 documentation</title>
+    <title>Welcome to the Open Folder documentation &mdash; Open Folder 0.6 documentation</title>
     
     <link rel="stylesheet" href="_static/basic.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -30,7 +30,7 @@
     <script type="text/javascript" src="_static/js/jquery-fix.js"></script>
     <script type="text/javascript" src="_static/bootstrap-2.3.2/js/bootstrap.min.js"></script>
     <script type="text/javascript" src="_static/bootstrap-sphinx.js"></script>
-    <link rel="top" title="Open Metadata 0.6 documentation" href="#" />
+    <link rel="top" title="Open Folder 0.6 documentation" href="#" />
 <meta charset='utf-8'>
 <meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
 <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
@@ -49,7 +49,7 @@
           <span class="icon-bar"></span>
         </button>
 
-        <a class="brand" href="#">Open Metadata</a>
+        <a class="brand" href="#">Open Folder</a>
         <span class="navbar-text pull-left"><b>0.6</b></span>
 
         <div class="nav-collapse">
@@ -68,7 +68,7 @@
                 <li class="dropdown">
   <a href="#" class="dropdown-toggle" data-toggle="dropdown">Page <b class="caret"></b></a>
   <ul class="dropdown-menu localtoc"><ul>
-<li><a class="reference internal" href="#">Welcome to the Open Metadata documentation</a><ul>
+<li><a class="reference internal" href="#">Welcome to the Open Folder documentation</a><ul>
 <li><a class="reference internal" href="#currently">Currently</a><ul>
 <li><a class="reference internal" href="#calling-for">Calling for</a></li>
 </ul>
@@ -134,7 +134,7 @@
 <div class="line">Note: This is <strong>alpha</strong> software and is not guaranteed to remain unchanged</div>
 </div>
 <div class="section" id="welcome-to-the-open-metadata-documentation">
-<h1>Welcome to the Open Metadata documentation<a class="headerlink" href="#welcome-to-the-open-metadata-documentation" title="Permalink to this headline">¶</a></h1>
+<h1>Welcome to the Open Folder documentation<a class="headerlink" href="#welcome-to-the-open-metadata-documentation" title="Permalink to this headline">¶</a></h1>
 <p>Hello. I&#8217;m a <em>simple</em>, cross-platform, hierarchical metadata API for storing and accessing various formats via quite a few protocols of any size and complexity via your file-system. Oh, I&#8217;m also open source and <a class="reference external" href="https://github.com/mottosso/openmetadata">available on GitHub</a> under the <a class="reference external" href="http://opensource.org/licenses/MIT">MIT license</a>.</p>
 <p>Care to help? Get <a class="reference external" href="mailto:marcus&#37;&#52;&#48;pipi&#46;io">in touch</a>.</p>
 <div class="section" id="currently">
@@ -159,12 +159,12 @@
 <li><a class="reference external" href="http://i.msdn.microsoft.com/dynimg/IC534518.png">Binary file-format propertes?</a></li>
 <li><a class="reference external" href="https://support.shotgunsoftware.com/entries/24806218-query-various-values-names">Cells in a database?</a></li>
 </ul>
-<p>The definition of &#8220;data&#8221; in Open Metadata is <em>&#8220;anything that is a file&#8221;</em> and thus the definition of metadata becomes <em>&#8220;files about files&#8221;</em>.</p>
+<p>The definition of &#8220;data&#8221; in Open Folder is <em>&#8220;anything that is a file&#8221;</em> and thus the definition of metadata becomes <em>&#8220;files about files&#8221;</em>.</p>
 <p>This narrows it down a bit, but lets not stop there. Data may be abstract. A collection of pictures can be referred to as a &#8220;group&#8221; of those pictures. This &#8220;group&#8221; may also contain metadata. Luckily, abstract content is well defined in any file-system. It is the common folder.</p>
 </div>
 <div class="section" id="the-common-folder">
 <h3>The Common Folder<a class="headerlink" href="#the-common-folder" title="Permalink to this headline">¶</a></h3>
-<p>Folders are at the heart of Open Metadata. Rather than storing metadata separately or internally, you could store it as-is together with the content.</p>
+<p>Folders are at the heart of Open Folder. Rather than storing metadata separately or internally, you could store it as-is together with the content.</p>
 </div>
 </div>
 <div class="section" id="installation-hello-world">
@@ -188,7 +188,7 @@ $ python openmetadata/test.py</pre>
 <p>Underneath &#8216;my_asset&#8217; there is a folder. A special folder which this API writes and reads from. The name of this folder is not relevant (it&#8217;s &#8216;.meta&#8217;) but it&#8217;s content are. Each piece of data within this folder corresponds to a &#8220;channel&#8221; (which are also folders).</p>
 <p>A channel is a group. A collection. It contains data of similar types, such as plain text documents, JSON files or images.</p>
 <p>That&#8217;s right. &#8220;images&#8221;. Not &#8220;image&#8221;. That&#8217;s because a JPEG is an image format, but so is PNG. A channel then may contain a variety of image formats, as long as they all conform to the more universal concept of being an image (a 2-dimensional grid of pixels).</p>
-<p>So why are some channels groups of identical formats and some not? Because what matters to you as a programmer is not what file-protocol is being used to store your content. It is the content itself. OpenMetadata does not care about file-protocols, it cares about content. Specifically, about content after it has been read by whatever file-protocol or compression method hosted it.</p>
+<p>So why are some channels groups of identical formats and some not? Because what matters to you as a programmer is not what file-protocol is being used to store your content. It is the content itself. OpenFolder does not care about file-protocols, it cares about content. Specifically, about content after it has been read by whatever file-protocol or compression method hosted it.</p>
 </div>
 </div>
 <div class="section" id="more">
@@ -207,7 +207,7 @@ $ python openmetadata/test.py</pre>
 <div class="section" id="api-reference">
 <h1>API Reference<a class="headerlink" href="#api-reference" title="Permalink to this headline">¶</a></h1>
 <p>Care to know a secret?</p>
-<p>I am three. We are Metadata, Channel and Data. We live together in hierarchies. Metadata is the parent of Channel and Data is its child.</p>
+<p>I am three. We are Folder, Channel and Data. We live together in hierarchies. Folder is the parent of Channel and Data is its child.</p>
 <p>[uml image here]</p>
 <p>The metadata lies hidden in your folders under the name &#8221;.meta&#8221; and it hosts one or more channels, like this:</p>
 <div class="highlight-python"><pre>$ \parent_folder\.meta\channel_1

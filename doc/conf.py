@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Open Metadata documentation build configuration file, created by
+# Open Folder documentation build configuration file, created by
 # sphinx-quickstart on Sun Sep 01 10:50:23 2013.
 #
 # This file is execfile()d with the current directory set to its containing dir.
@@ -41,7 +41,7 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = u'Open Metadata'
+project = u'Open Folder'
 copyright = u'2013, Marcus Ottosson'
 
 # The version info for the project you're documenting, acts as replacement for
@@ -174,7 +174,7 @@ html_static_path = ['_static']
 #html_file_suffix = None
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = 'OpenMetadatadoc'
+htmlhelp_basename = 'OpenFolderdoc'
 
 
 # -- Options for LaTeX output --------------------------------------------------
@@ -193,7 +193,7 @@ latex_elements = {
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title, author, documentclass [howto/manual]).
 latex_documents = [
-  ('index', 'OpenMetadata.tex', u'Open Metadata Documentation',
+  ('index', 'OpenFolder.tex', u'Open Folder Documentation',
    u'Marcus Ottosson', 'manual'),
 ]
 
@@ -223,7 +223,7 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    ('index', 'openmetadata', u'Open Metadata Documentation',
+    ('index', 'openmetadata', u'Open Folder Documentation',
      [u'Marcus Ottosson'], 1)
 ]
 
@@ -237,8 +237,8 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-  ('index', 'OpenMetadata', u'Open Metadata Documentation',
-   u'Marcus Ottosson', 'OpenMetadata', 'One line description of project.',
+  ('index', 'OpenFolder', u'Open Folder Documentation',
+   u'Marcus Ottosson', 'OpenFolder', 'One line description of project.',
    'Miscellaneous'),
 ]
 
