@@ -214,7 +214,7 @@ bg=light_gray</panel_attributes>
     <panel_attributes>Channel
 --
 + children : list
---
+
 bg=orange</panel_attributes>
     <additional_attributes/>
   </element>
@@ -525,15 +525,15 @@ bg=yellow</panel_attributes>
       <w>220</w>
       <h>210</h>
     </coordinates>
-    <panel_attributes>.meta
+    <panel_attributes>folder
 	channel.fmt
-		data.ext
+		file.ext
 
-.meta
+folder
 	channel.fmt
-		.meta
+		folder
 			subchannel.fmt
-				data.ext
+				file.ext
 bg=default</panel_attributes>
     <additional_attributes/>
   </element>
@@ -547,10 +547,10 @@ bg=default</panel_attributes>
     </coordinates>
     <panel_attributes>File
 --
-+ input : *
++ data (void) : *
 --
-+ get(void) : *
-+ set(other=*) : void
++ setdata(other=*) : void
++ write(void) : *
 bg=orange</panel_attributes>
     <additional_attributes/>
   </element>
@@ -692,8 +692,7 @@ bg=orange</panel_attributes>
 + basename : str
 + ext : str
 + path : str
-+ exists : bool
-+ parent : str
++ parent : obj
 --
 + dir(void) : str
 + dump(void) : dict

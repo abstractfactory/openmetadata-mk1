@@ -26,8 +26,6 @@ log = logging.getLogger('openmetadata.transaction')
 
 def write(root, data):
     """Convenience method for writing metadata"""
-    
-    # root = os.path.join(root, '.meta')
 
     if isinstance(data, basestring):
         # String are written as plain-text
@@ -57,16 +55,18 @@ def update(root, data):
     """Convenience method for updating metadata"""
 
 
-def read(root):
+def read(root, hierarchy={}):
     """Convenience method for reading metadata"""
-    # root = os.path.join(root, '.meta')
 
-    if not os.path.exists(root):
-        log.warning('"%s" not found' % root)
+    obj = instance.create(root)
+    if not obj.exists():
         return {}
 
-    item = instance.Folder(root)
-    return item.read()
+    for child in obj.children:
+        hierarchy[child.basename] = {}
+        read(child, hierarchy[child.basename])
+
+    return hierarchy
 
 
 def delete(root, max_retries=10):
@@ -117,7 +117,7 @@ if __name__ == '__main__':
     import openmetadata as om
 
     package = os.getcwd()
-    root = os.path.join(package, 'test')
+    root = os.path.join(package, 'test', 'persist')
 
     print "Reading: %s " % root
     print om.read(root)

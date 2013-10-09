@@ -7,71 +7,40 @@ the writing mechanisms
 
 import os
 import logging
-from abc import ABCMeta
+from abc import ABCMeta, abstractmethod
 
 from openmetadata import format
 from openmetadata import constant
+from openmetadata import interface
 
 log = logging.getLogger('openmetadata.instance')
 
 
-class BaseClass:
-    """Abc to all instances"""
+class BaseClass(interface.AbstractPath):
+    """Currently, instances contain their full paths, but
+    Templates do not. They only contain their relative paths, and are
+    assembled upon query"""
 
     __metaclass__ = ABCMeta
 
+    @abstractmethod
     def __init__(self, path):
+        super(BaseClass, self).__init__(path)
         assert os.path.exists(path)
-        self._path = path
-
-    def __str__(self):
-        return str(self.basename)
-
-    def __repr__(self):
-        return u"%s.%s(%r)" % (__name__, self.__class__.__name__, self.__str__())
-
-    @property
-    def ext(self):
-        return ".%s" % self._path.rsplit(".", 1)[-1]
-
-    @property
-    def basename(self):
-        return os.path.basename(self.path)
 
     @property
     def path(self):
         return self._path
 
     @property
+    def ext(self):
+        return ".%s" % self.path.rsplit(".", 1)[-1]
+
+    @property
     def parent(self):
         """Return parent os `self` as an object"""
-        return InstanceFactory.create(os.path.dirname(self.path))
-
-    # def dump(self):
-    #     hierarchy = {self: {}}
-
-    #     if not hasattr(self, "children"):
-    #         return self
-
-    #     for child in self.children:
-    #         print "Putting %r in %r" % (child.dump(), child)
-    #         hierarchy[self][child] = child.dump()
-
-    #     return hierarchy
-
-    # def read(self):
-    #     """Return hierarchy of files and folders as objects
-
-    #     """
-
-    #     data = {}
-    #     for child in self.children:
-    #         basename = os.path.basename(child._path)
-    #         if not hasattr(child, 'children'):
-    #             data[basename] = child.read()
-    #         else:
-    #             data[basename] = child
-    #     return data
+        parent_path = super(BaseClass, self).parent
+        return InstanceFactory.create(parent_path)
 
 
 class Folder(BaseClass):
@@ -97,25 +66,16 @@ class Folder(BaseClass):
         Returns (list) of valid channels
 
         """
-        
-        children = []
 
-        for child in os.listdir(self.path):
-            fullpath = os.path.join(self.path, child)
-            
-            # Children can only be channels
-            if not os.path.isdir(fullpath):
-                basename = os.path.basename(fullpath)
-                if not "." in basename:
-                    # Channels are those with an extension
-                    log.debug("Not including %s in children request" % fullpath)
-                    continue
-
+        children = os.listdir(self.path) if os.path.exists(self.path) else []
+        while children:
+            fullpath = os.path.join(self.path, children.pop())
             instance = InstanceFactory.create(fullpath)
-            assert isinstance(instance, Channel), "%s not a channel" % fullpath
-            children.append(instance)
-
-        return children
+            
+            # Builder returns either an object or None.
+            # Only yield valid objects.
+            if instance:
+                yield instance
 
 
 class Channel(BaseClass):
@@ -132,24 +92,12 @@ class Channel(BaseClass):
 
         """
 
-        children = []
-
-        for item in os.listdir(self._path):
-            fullpath = os.path.join(self._path, item)
-            
-            # Children can only be either 
-            # files, other metadata folders.
-            if os.path.isdir(fullpath):
-                basename = os.path.basename(fullpath)
-                if basename != constant.Meta:
-                    log.debug("Not including %s in children request" % fullpath)
-                    continue
-
+        children = os.listdir(self.path) if os.path.exists(self.path) else []
+        while children:
+            fullpath = os.path.join(self.path, children.pop())
             instance = InstanceFactory.create(fullpath)
-            assert isinstance(instance, Folder) or isinstance(instance, File)
-            children.append(instance)
-
-        return children
+            if instance:
+                yield instance
 
 
 class File(BaseClass):
@@ -164,7 +112,7 @@ class File(BaseClass):
         value = None
 
         # If it quacks like a duck
-        reader =  format.create(self._path)
+        reader =  format.create(ext=self.ext)
 
         try:
             value = reader.read(self._path)
@@ -177,22 +125,64 @@ class File(BaseClass):
 class InstanceFactory:
     @classmethod
     def create(cls, path):
+        if not os.path.exists(path):
+            raise OSError('"%s" not found' % path)
+
+        basename = os.path.basename(path)
+        parent = os.path.dirname(path)
+        ext = os.path.splitext(path)[1]
+
+        # print "\n\tPath: %s" % path
+        # print "\tBasename: %s" % basename
+        # print "\tParent: %s" % parent
+        # print "\tExtension: %s" % ext
+
         if os.path.isdir(path):
-            basename = os.path.basename(path)
-            if not "." in basename:
+            children = os.listdir(path)
+            # print "\tChildren: %s" % children
+
+            if constant.Meta in children:
+                # Presence of Metadata folder within `path`
+                # makes `path` a Folder object...
+                
+                if os.path.basename(parent) == constant.Meta:
+                    # ..unless its parent is a metadata folder,
+                    # then it's a channel that may be treated 
+                    # as a folder.
+                    if not ext:
+                        log.debug('Invalid channel found within metadata folder: %s' % path)
+                        return None
+                    return Channel(path)
+
                 return Folder(path)
 
-            if basename == '.meta':
-                return Folder(os.path.dirname(path))
+            if os.path.basename(parent) == constant.Meta:
+                # Folders within a metadata folder are
+                # always channels..
 
-            # Return only valid channels (with an extension)
-            components = basename.rsplit(".", 1)
-            if len(components) > 1:
+                if not ext:
+                    # ..but only channels with an extension are valid
+                    log.debug('Invalid channel found within metadata folder: %s' % path)
+                    return None
                 return Channel(path)
         else:
-            return File(path)
+            # If it isn't a folder, it's a file.
+            #
+            # Take two steps up, if its a metadata folder
+            # then this is a File object.
 
-        raise ValueError("What is %s?" % path)
+            possible_channel = os.path.dirname(path)
+            possible_metafolder = os.path.dirname(possible_channel)
+            if os.path.basename(possible_metafolder) == constant.Meta:
+                if not ext:
+                    # ..but only channels with an extension are valid
+                    log.debug('Invalid file found within channel: %s' % path)
+                    return None
+
+                return File(path)
+
+        log.debug('What is "%s"?' % path)
+        return None
 
 
 create = InstanceFactory.create
@@ -202,6 +192,7 @@ if __name__ == '__main__':
     cwd = os.getcwd()
     root = os.path.join(cwd, 'test', 'persist')
     fold = Folder(root)
-    
+    # print fold.children
+    print len(fold.children)
     for child in fold.children:
         print child

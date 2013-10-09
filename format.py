@@ -18,9 +18,12 @@ class Txt:
 
     @classmethod
     def write(cls, path, data):
-        with open(path, 'w') as file:
-            file.write(data)
-        return path
+        try:
+            with open(path, 'w') as file:
+                file.write(data)
+            return True
+        except:
+            return False
 
 
 class Json:
@@ -34,9 +37,12 @@ class Json:
 
     @classmethod
     def write(cls, path, data):
-        with open(path, 'w') as file:
-            json.dump(data, file, indent=4)
-        return path
+        try:
+            with open(path, 'w') as file:
+                json.dump(data, file, indent=4)
+            return True 
+        except:
+            return False
 
 
 class Ini:
@@ -71,16 +77,29 @@ mapping = {'.txt': Txt,
            '.gsheet': GSheet,
            '.gdoc': GDoc}
 
+# mapping = {basestring: Txt,
+#            dict: Json,
+#            list: Json}
 
 class Factory:
+    """Read and write is based on Extension, not DataType.
+
+    If based on DataType, for instance dict or basestring,
+    since .ini reads as a dict and dict are assigned to Json,
+    then reading a .ini will produce a .json once written.
+
+    Being based on Extension guarantees output correlates to
+    input, as well as enables multiple extensions to be outputted.
+
+    """
+
     @classmethod
-    def create(cls, path):
-        format = os.path.splitext(path)[1]
-        return mapping.get(format)
+    def create(cls, ext):
+        return mapping.get(ext)
 
 
-def create(path):
-    return Factory.create(path)
+def create(ext):
+    return Factory.create(ext)
 
 
 if __name__ == '__main__':

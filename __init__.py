@@ -5,8 +5,6 @@ import constant, instance, format, reference
 import logging
 import sys
 
-sys.dont_write_bytecode = True
-
 # Initiate logging for main level
 log = logging.getLogger('openmetadata')
 log.setLevel(logging.INFO)
