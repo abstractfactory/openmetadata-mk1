@@ -61,14 +61,14 @@ def test_instancefactory(root=None):
         - Any file whose parents parent is a .meta folder
             is a File object.
 
+    !Todo START!
     How:
         - Get all files and folders of root manually
         - Compare and contrast resulting children
         - No objects containing the word "invalid_" should be returned
         - No objects containing the word "no_" should be returned
         - All other objects should be returned
-
-    !Todo!
+    !Todo END!
 
     """
 
@@ -138,8 +138,10 @@ def test_full_template():
     file.write()
 
     # Read it back in
-    instance = om.instance.create(file.path)
-    assert_equals(instance.read(), data)
+    file_instance = om.instance.create(file.path)
+    file_instance.read()
+
+    assert_equals(file_instance.data, data)
 
     om.delete(folder.path)
 
@@ -158,8 +160,10 @@ def test_append_file_to_existing():
 
     # Read it back in
     file_instance = om.instance.create(file_template.path)
+    file_instance.read()
+
     assert_is_instance(file_instance, om.instance.File)
-    assert_equals(file_instance.read(), data)
+    assert_equals(file_instance.data, data)
 
     om.delete(file_instance.path)
 
@@ -181,8 +185,10 @@ def test_append_metadata_to_channel():
 
     # Read it back in
     file_instance = om.instance.create(file.path)
+    file_instance.read()
+
     assert_is_instance(file_instance, om.instance.File)
-    assert_equals(file_instance.read(), data)
+    assert_equals(file_instance.data, data)
 
     om.delete(file_instance.path)
 

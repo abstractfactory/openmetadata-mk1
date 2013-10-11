@@ -1,11 +1,3 @@
-"""Templates are temporary, editable elements on in memory.
-
-Templates correlates to each Instance object, which are used for reading,
-and provides the writing mechanisms.
-
-
-"""
-
 import os
 import logging
 from abc import ABCMeta, abstractmethod
@@ -30,7 +22,7 @@ class BaseClass(interface.AbstractPath):
         super(BaseClass, self).__init__(path)
         self._parent = parent
 
-        if hasattr(parent, 'addchild'):
+        if parent:
             parent.addchild(self)
 
     @property
@@ -73,8 +65,12 @@ class Folder(BaseClass):
 
     @property
     def children(self):
-        for child in self._children:
-            yield child
+        if os.path.exists(self.path):
+            if os.path.isdir(self.path):
+                for child in os.listdir(self.path):
+                    self._children.append(child)
+
+        return self._children
 
     def addchild(self, child):
         self._children.append(child)

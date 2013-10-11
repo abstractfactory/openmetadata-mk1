@@ -9,11 +9,16 @@ import os
 import logging
 from abc import ABCMeta, abstractmethod
 
-from openmetadata import format
+# from openmetadata import format
 from openmetadata import constant
 from openmetadata import interface
+from openmetadata import process
 
 log = logging.getLogger('openmetadata.instance')
+
+# List of files to disregard. 
+# They will not be returned via a call to .children
+disregard = ['thumbs.db', '.ds_store']
 
 
 class BaseClass(interface.AbstractPath):
@@ -60,6 +65,13 @@ class Folder(BaseClass):
         return os.path.join(self._path, constant.Meta)
 
     @property
+    def basename(self):
+        """Overriden from its baseclass due to .path being overwitten too.
+        We want our basename to represent the name of the folder, not the 
+        internal .meta folder"""
+        return os.path.basename(os.path.dirname(self.path))
+
+    @property
     def children(self):
         """Return channels of `self`
 
@@ -91,10 +103,14 @@ class Channel(BaseClass):
         Returns (list) of valid files and metadata hierarchies.
 
         """
-
+        
         children = os.listdir(self.path) if os.path.exists(self.path) else []
         while children:
-            fullpath = os.path.join(self.path, children.pop())
+            child = children.pop()
+            if child.lower() in disregard:
+                continue
+
+            fullpath = os.path.join(self.path, child)
             instance = InstanceFactory.create(fullpath)
             if instance:
                 yield instance
@@ -105,26 +121,42 @@ class File(BaseClass):
 
     def __init__(self, path):
         super(File, self).__init__(path)
+        self._data = None
+
+    @property
+    def data(self):
+        """Store result of .read() internally.
+
+        ..so as to line up with it's Template equivalent
+
+        """
+
+        return self._data
 
     def read(self):
-        """Fetch appropriate reader and output contents of `path`"""
+        """Store contents from `self.path` in `self.data`"""
 
-        value = None
-
-        # If it quacks like a duck
-        reader =  format.create(ext=self.ext)
-
-        try:
-            value = reader.read(self._path)
-        except AttributeError:
-            value = None
+        with open(self.path, 'r') as f:
+            raw = f.read()
         
-        return value or self._path
+        processed = process.preprocess(raw, self.ext)
+        self._data = processed
 
 
 class InstanceFactory:
     @classmethod
     def create(cls, path):
+        """Return object based on `path`
+
+        Pre-conditions
+            `path` must exist
+
+        Post-conditions
+            Output is an object if valid
+            Output is None if invalid
+
+        """
+
         if not os.path.exists(path):
             raise OSError('"%s" not found' % path)
 
@@ -132,14 +164,8 @@ class InstanceFactory:
         parent = os.path.dirname(path)
         ext = os.path.splitext(path)[1]
 
-        # print "\n\tPath: %s" % path
-        # print "\tBasename: %s" % basename
-        # print "\tParent: %s" % parent
-        # print "\tExtension: %s" % ext
-
         if os.path.isdir(path):
             children = os.listdir(path)
-            # print "\tChildren: %s" % children
 
             if constant.Meta in children:
                 # Presence of Metadata folder within `path`
@@ -181,7 +207,7 @@ class InstanceFactory:
 
                 return File(path)
 
-        log.debug('What is "%s"?' % path)
+        log.debug("Can't figure out '%s'" % path)
         return None
 
 

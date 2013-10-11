@@ -99,20 +99,6 @@ def delete(root, max_retries=10):
     log.debug("Removed %s" % root)
 
 
-# def _hardlink(src, dst):
-#     if not ctypes.windll.kernel32.CreateHardLinkA(dst, src, 0): 
-#         raise OSError("Could not hardlink '%s' to '%s'" % (src, dst))
-
-
-# def _softlink(src, dst):
-#     return
-
-
-# def _junction(src, dst):
-#     return
-
-
-
 if __name__ == '__main__':
     import openmetadata as om
 

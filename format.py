@@ -1,5 +1,31 @@
 
-import os
+"""
+Format reads and writes to target.
+
+There are two ways in which data is written. 
+    - Explicit
+    - Implicit
+
+Explicit
+    Here, the data supplied by the user is written to the file* on disk.
+    This includes text documents, dictionaries, lists. Essentially any
+    datastructure that you could think to fill using any of the natively
+    supported Python datastructures.
+
+Implicit
+    In this case, the data is somehow referenced and not actually written
+    to the file. Instead, the data is written at the referenced target and
+    only linked to by the file. This includes database communication,
+    internet downloads or streams.
+
+
+* File refers to the end-result of any written data. OM is a file-based 
+database and this is the means with which it communicates with persistant
+storage.
+
+"""
+
+# import os
 import json
 import logging
 import ConfigParser
