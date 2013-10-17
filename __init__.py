@@ -1,6 +1,6 @@
-from template import Folder, Channel, File
+import constant, reference
 from transaction import write, read, update, delete
-import constant, instance, format, reference
+from lib import Folder, Channel, File, Factory
 
 import logging
 import sys

@@ -1,13 +1,11 @@
-"""
-Input/Output module for Open Folder
+"""Convenience module for the end-user
 
-    Created: 2013-09-01
-    Author: Marcus Ottosson
-    Email: marcus@pipi.io
+The goal of this module is to provide as high-level utilities
+as possible for users who wish to have as little knowledge as
+possible about Open Metadata.
 
-Usage:
-
-    >>> test()
+Target audience leans towards Technical Directors or
+fellow scripters in any DCC.
 
 """
 
@@ -17,8 +15,7 @@ import os
 import logging
 import shutil
 
-from openmetadata import instance
-from openmetadata import template
+from openmetadata import lib
 
 
 log = logging.getLogger('openmetadata.transaction')
@@ -26,47 +23,17 @@ log = logging.getLogger('openmetadata.transaction')
 
 def write(root, data):
     """Convenience method for writing metadata"""
-
-    if isinstance(data, basestring):
-        # String are written as plain-text
-        meta = template.Folder(root)
-
-        # New channel
-        chan = template.Channel('untitled.txt', meta)
-        file = template.File('untitled.txt', chan)
-        file.setdata(data)
-
-        return file.write()
-
-    if isinstance(data, dict):
-        meta = template.Folder(root)
-
-        # New channel
-        chan = template.Channel('untitled.kvs', meta)
-        file = template.File('untitled.json', chan)
-        file.setdata(data)
-
-        return file.write()
-
-    raise ValueError('Failed to write "%r" to "%s"' % (data, root))
+    raise NotImplementedError
 
 
 def update(root, data):
     """Convenience method for updating metadata"""
+    raise NotImplementedError
 
 
 def read(root, hierarchy={}):
     """Convenience method for reading metadata"""
-
-    obj = instance.create(root)
-    if not obj.exists():
-        return {}
-
-    for child in obj.children:
-        hierarchy[child.basename] = {}
-        read(child, hierarchy[child.basename])
-
-    return hierarchy
+    raise NotImplementedError
 
 
 def delete(root, max_retries=10):

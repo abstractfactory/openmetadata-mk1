@@ -24,19 +24,110 @@ def test_children(root=None):
 
     """
     
-    root = root or om.instance.Folder(persist)
+    root = root or om.Folder(persist)
     if hasattr(root, 'children'):
         for child in root.children:
-            if isinstance(root, om.instance.Folder):
+            if isinstance(root, om.Folder):
                 # Children of Folders are always channels
-                assert_is_instance(child, om.instance.Channel)
-            if isinstance(root, om.instance.Channel):
-                assert isinstance(child, om.instance.File) or isinstance(child, om.instance.Folder)
+                assert_is_instance(child, om.Channel)
+            if isinstance(root, om.Channel):
+                assert isinstance(child, om.File) or isinstance(child, om.Folder)
 
             # Recursively test each child
             test_children(child)
     else:
-        assert_is_instance(root, om.instance.File)
+        assert_is_instance(root, om.File)
+
+
+def test_clear_file():
+    """Clear individual file"""
+    folder = om.Folder(persist)
+    
+    # Add channel to it
+    channel = om.Channel('new_channel.txt', folder)
+    file = om.File('document.txt', channel)
+    
+    file.data = "This is some data"
+    file.write()
+
+    file.clear()
+
+    assert_equals(file.exists(), False)
+
+    # Clean up
+    channel.clear()
+
+
+def test_clear_channel():
+    """Clear individual channel"""
+    folder = om.Folder(persist)
+    
+    # Add channel to it
+    channel = om.Channel('new_channel.txt', folder)
+    file = om.File('document.txt', channel)
+    
+    file.data = "This is some data"
+    file.write()
+
+    channel.clear()
+
+    assert_equals(channel.exists(), False)
+
+
+def test_clear_folder():
+    """Remove ALL metadata"""
+    folder = om.Folder(dynamic)
+    
+    # Add channel to it
+    channel = om.Channel('new_channel.txt', folder)
+    file = om.File('document.txt', channel)
+    
+    file.data = "This is some data"
+    file.write()
+
+    folder.clear()
+
+    assert_equals(folder.exists(), False)
+
+
+def test_comparison():
+    """Separate instances of same path are equal"""
+    folder = om.Folder(dynamic)
+    
+    # Add channel to it
+    channel = om.Channel('new_channel.txt', folder)
+    file = om.File('document.txt', channel)
+
+    file_other = om.File('document.txt', channel)
+
+    assert_equals(file, file_other)
+
+
+def test_iterator():
+    """Iterator (for channel in folder) works"""
+    folder = om.Folder(root)
+
+    for channel in folder:
+        # Child is indeed a channel
+        assert_is_instance(channel, om.Channel)
+
+        # Result of iterator is the same as calling
+        # .children manually.
+        assert_true(channel in folder.children)
+
+        for file in channel:
+            assert_is_instance(file, om.File)
+            assert_true(file in channel.children)
+
+
+def test_trash():
+    """Deleted items end up in trash"""
+    pass
+
+
+def test_revisions():
+    """Edited items are backed up in revisions"""
+    pass
 
 
 # def test_om_read():
@@ -61,18 +152,18 @@ def test_instancefactory(root=None):
         - Any file whose parents parent is a .meta folder
             is a File object.
 
-    !Todo START!
+    !Todo!
     How:
         - Get all files and folders of root manually
         - Compare and contrast resulting children
         - No objects containing the word "invalid_" should be returned
         - No objects containing the word "no_" should be returned
         - All other objects should be returned
-    !Todo END!
+    !Todo!
 
     """
 
-    root = root or om.instance.create(stress)
+    root = root or om.Factory.create(stress)
     
     if hasattr(root, 'children'):
         for child in root.children:
@@ -91,13 +182,13 @@ def test_instancefactory(root=None):
 
 # def test_om_delete():
 #     """`om.delete()` convenience method"""
-#     meta = om.template.Folder(os.path.join(dynamic, om.constant.Meta))
-#     chan = om.template.Channel('chan.txt', parent=meta)
-#     file = om.template.File('document.txt', parent=chan)
+#     meta = om.Folder(os.path.join(dynamic, om.constant.Meta))
+#     chan = om.Channel('chan.txt', parent=meta)
+#     file = om.File('document.txt', parent=chan)
     
 #     data = 'some text'
 
-#     file.setdata(data)
+#     file.data = data
 #     file.write()
 
 #     om.delete(meta.path)
@@ -105,40 +196,40 @@ def test_instancefactory(root=None):
 
 def test_factory_folder():
     """Create Folder via Factory"""
-    obj = om.instance.create(persist)
-    assert_is_instance(obj, om.instance.Folder)
+    obj = om.Factory.create(persist)
+    assert_is_instance(obj, om.Folder)
 
 
 def test_factory_channel():
     """Create Channel via Factory"""
     chan = os.path.join(persist, '.meta', 'chan.txt')
 
-    channel = om.instance.create(chan)
-    assert_is_instance(channel, om.instance.Channel)
+    channel = om.Factory.create(chan)
+    assert_is_instance(channel, om.Channel)
 
 
 def test_factory_file():
     """Create File via Factory"""
     chan = os.path.join(persist, '.meta', 'chan.txt', 'document.txt')
 
-    channel = om.instance.create(chan)
-    assert_is_instance(channel, om.instance.File)
+    channel = om.Factory.create(chan)
+    assert_is_instance(channel, om.File)
 
 
 def test_full_template():
     """New metadata from scratch using templates"""
 
-    folder = om.template.Folder(dynamic)
-    chan = om.template.Channel('chan.txt', parent=folder)
-    file = om.template.File('document.txt', parent=chan)
+    folder = om.Folder(dynamic)
+    chan = om.Channel('chan.txt', parent=folder)
+    file = om.File('document.txt', parent=chan)
     
     data = 'some text'
 
-    file.setdata(data)
+    file.data = data
     file.write()
 
     # Read it back in
-    file_instance = om.instance.create(file.path)
+    file_instance = om.Factory.create(file.path)
     file_instance.read()
 
     assert_equals(file_instance.data, data)
@@ -149,20 +240,20 @@ def test_full_template():
 def test_append_file_to_existing():
     """Append file to existing channel"""
 
-    meta = om.instance.Folder(persist)
-    channel = meta.children.next()
+    folder = om.Folder(persist)
+    channel = folder.children[0]
         
     data = "new content"
 
-    file_template = om.template.File('appended.txt', channel)
-    file_template.setdata(data)
+    file_template = om.File('appended.txt', channel)
+    file_template.data = data
     file_template.write()
 
     # Read it back in
-    file_instance = om.instance.create(file_template.path)
+    file_instance = om.Factory.create(file_template.path)
     file_instance.read()
 
-    assert_is_instance(file_instance, om.instance.File)
+    assert_is_instance(file_instance, om.File)
     assert_equals(file_instance.data, data)
 
     om.delete(file_instance.path)
@@ -171,23 +262,23 @@ def test_append_file_to_existing():
 def test_append_metadata_to_channel():
     """Append metadata to existing channel"""
 
-    meta = om.instance.Folder(persist)
-    channel = meta.children.next()
+    meta = om.Folder(persist)
+    channel = meta.children[0]
 
-    submeta = om.template.Folder('.meta', parent=channel)
-    subchannel = om.template.Channel('subchan.txt', parent=submeta)
+    submeta = om.Folder('.meta', parent=channel)
+    subchannel = om.Channel('subchan.txt', parent=submeta)
 
     data = 'some text'
 
-    file = om.template.File('text.txt', parent=subchannel)
-    file.setdata(data)
+    file = om.File('document.txt', parent=subchannel)
+    file.data = data
     file.write()
 
     # Read it back in
-    file_instance = om.instance.create(file.path)
+    file_instance = om.Factory.create(file.path)
     file_instance.read()
 
-    assert_is_instance(file_instance, om.instance.File)
+    assert_is_instance(file_instance, om.File)
     assert_equals(file_instance.data, data)
 
     om.delete(file_instance.path)
@@ -196,18 +287,18 @@ def test_append_metadata_to_channel():
 # def test_hardlink_reference():
 #     """Create metadata using Hardlink reference"""
 
-#     meta = om.template.Folder(os.path.join(dynamic, om.constant.Meta))
-#     chan = om.template.Channel('chan.img', parent=meta)
-#     file = om.template.File('image1.png', parent=chan)
+#     meta = om.Folder(os.path.join(dynamic, om.constant.Meta))
+#     chan = om.Channel('chan.img', parent=meta)
+#     file = om.File('image1.png', parent=chan)
     
 #     img = os.path.join(root, 'image1.png')
 #     data = om.reference.Hardlink(img)
 
-#     file.setdata(data)
+#     file.data = data
 #     file.write()
 
 #     # Read it back in
-#     instance = om.instance.create(file.path)
+#     instance = om.Factory.create(file.path)
 #     assert_equals(instance.read(), file.path)
 
 #     om.delete(meta.path)
@@ -216,18 +307,18 @@ def test_append_metadata_to_channel():
 # def test_copy_reference():
 #     """Create metadata using Copy reference"""
 
-#     meta = om.template.Folder(os.path.join(dynamic, om.constant.Meta))
-#     chan = om.template.Channel('chan.img', parent=meta)
-#     file = om.template.File('image1.png', parent=chan)
+#     meta = om.Folder(os.path.join(dynamic, om.constant.Meta))
+#     chan = om.Channel('chan.img', parent=meta)
+#     file = om.File('image1.png', parent=chan)
     
 #     img = os.path.join(root, 'image1.png')
 #     data = om.reference.Copy(img)
 
-#     file.setdata(data)
+#     file.data = data
 #     file.write()
 
 #     # Read it back in
-#     instance = om.instance.create(file.path)
+#     instance = om.Factory.create(file.path)
 #     assert_equals(instance.read(), file.path)
 
 #     om.delete(meta.path)
@@ -237,6 +328,7 @@ if __name__ == '__main__':
     import nose
     nose.run(defaultTest=__name__)
     # print metadata
+    # test_clear_folder()
     # test_children()
     # test_om_read()
     # test_factory_folder()
