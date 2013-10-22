@@ -28,6 +28,7 @@ from __future__ import absolute_import
 import os
 import logging
 import shutil
+import time
 from abc import ABCMeta, abstractmethod
 
 from openmetadata import constant
@@ -156,6 +157,26 @@ class AbstractPath(object):
 
         return ".%s" % self.path.rsplit(".", 1)[-1]
 
+    def findparent(self, parent=None):
+        """Locate a parent up-stream by name `parent`"""
+        if not parent:
+            return self.parent
+
+        count = 0
+        current_parent = self.parent
+        while current_parent.basename != parent:
+            if current_parent.basename == constant.Meta:
+                self.log.warning(".meta root reached")
+                return None
+
+            current_parent = current_parent.parent
+
+            count += 1
+            if count > 10:
+                return None
+
+        return current_parent
+
     @property
     def trash(self):
         """Return list of deleted items of `self`"""
@@ -193,26 +214,46 @@ class AbstractPath(object):
             path = self.path
             retries = 0
             while True:
-                try:
-                    if os.path.isdir(path):
-                        shutil.rmtree(path)
-                    else:
-                        os.remove(path)
-                    break
-                except WindowsError as e:
-                    # Sometimes, Dropbox can bother this operation;
-                    # creating files in the midst of deleting a folder.
-                    #
-                    # If this happens, try again in a short while.
-                    
-                    retries += 1
-                    if retries > max_retries:
-                        log.error(e)
-                        break
+                dirname = os.path.dirname(path)
+                basename = os.path.basename(path)
 
-                    import time
-                    time.sleep(0.1)
-                    log.debug("Retired %i time(s) for %s" % (retries, path))
+                deleted_time = time.strftime("%Y%m%d%H%M%S", time.gmtime())
+                deleted_basename = ".deleted.%s.%s" % (deleted_time, basename)
+                deleted_path = os.path.join(dirname, deleted_basename)
+                
+                if os.path.exists(deleted_path):
+                    try:
+                        # If `self` has previously been deleted and stored
+                        # as a .deleted copy, remove this old copy permanently.
+                        #
+                        # Note: .deleted path is unique per-second, so odds of
+                        # any entry being removed permanently at all is very small.
+                        if os.path.isdir(deleted_path):
+                            shutil.rmtree(deleted_path)
+                        else:
+                            os.remove(deleted_path)
+
+                    except WindowsError as e:
+                        # Sometimes, Dropbox can bother this operation;
+                        # creating files in the midst of deleting a folder.
+                        #
+                        # If this happens, try again in a short while.
+                        
+                        retries += 1
+                        if retries > max_retries:
+                            log.error("%r.clear() failed with msg: %s" % (self, e))
+                            break
+
+                        time.sleep(0.1)
+                        log.debug("Retired %i time(s) for %s" % (retries, path))
+
+                try:
+                    # Store `path` as deleted copy.
+                    os.rename(path, deleted_path)
+                    break
+
+                except WindowsError as e:
+                    raise e
 
 
             self.log.debug("clear(): Removed %s" % path)
@@ -253,6 +294,7 @@ class AbstractParent(AbstractPath):
                         continue
 
                     obj = Factory.create(fullpath)
+                    # obj._parent = self
                     if obj:
                         self._children.append(obj)
 
@@ -353,6 +395,13 @@ class File(AbstractPath):
         with open(self.path, 'w') as f:
             f.write(processed)
 
+        # Hide .meta folder
+        if os.name == 'nt':
+            root = self.findparent('.meta')
+            p = os.popen('attrib +h ' + root.path)
+            p.close()
+        else:
+            self.log.warning("Could not hide .meta folder on this OS: '%s'" % os.name)
 
 class Factory:
     @classmethod
@@ -376,6 +425,11 @@ class Factory:
         ext = os.path.splitext(path)[1]
 
         if os.path.isdir(path):
+            # If path is a .meta directory
+            if os.path.basename(path) == constant.Meta:
+                return Folder(os.path.dirname(path))
+
+            # Otherwise, inspect it's children
             children = os.listdir(path)
 
             if constant.Meta in children:
@@ -428,11 +482,15 @@ if __name__ == '__main__':
     
     # Existing folder
     folder = Folder(root)
-
-    for channel in folder:
-        print channel
-        for file in channel:
-            print "\t%s" % file
+    channel = folder.children[0]
+    file = channel.children[0]
+    # print channel.path
+    # print channel.parent
+    print file.findparent('.ka')
+    # for channel in folder:
+    #     print channel
+    #     for file in channel:
+    #         print "\t%s" % file
     
     # Add channel to it
     # channel = Channel('newchannel.txt', folder)

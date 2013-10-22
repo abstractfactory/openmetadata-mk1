@@ -52,20 +52,20 @@ log = logging.getLogger('openmetadata.process')
 
 def preprocess(raw, format):
     """Process outgoing data"""
-    format = mapping.get(format)
-    if not format:
-        raise ValueError('Format "%s" not supported' % format)
+    process = mapping.get(format)
+    if not process:
+        return None
 
-    return format.pre(raw)
+    return process.pre(raw)
 
 
 def postprocess(raw, format):
     """Process incoming data"""
-    format = mapping.get(format)
-    if not format:
-        raise ValueError('Format "%s" not supported' % format)
+    process = mapping.get(format)
+    if not process:
+        return None
 
-    return format.post(raw)
+    return process.post(raw)
 
 
 class AbstractFormat(object):

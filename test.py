@@ -169,6 +169,10 @@ def test_instancefactory(root=None):
         for child in root.children:
             test_instancefactory(child)
 
+    # Inserting a .meta folder directly
+    metafolder = om.Factory.create(os.path.join(persist, om.constant.Meta))
+    assert_is_instance(metafolder, om.lib.Folder)
+
 # def test_om_write():
 #     """`om.write()` convenience method"""
 #     om.write(dynamic, 'some text')

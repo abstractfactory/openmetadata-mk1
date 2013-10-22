@@ -31,9 +31,42 @@ def update(root, data):
     raise NotImplementedError
 
 
-def read(root, hierarchy={}):
+def read(root):
     """Convenience method for reading metadata"""
-    raise NotImplementedError
+    # convert root to folder
+    folder = lib.Factory.create(root)
+    assert isinstance(folder, lib.Folder)
+
+    # make empty dict
+    data = {}
+    for channel in folder:
+        basename = channel.basename
+
+        for file in channel:
+            contents = file.read().data
+            if not contents:
+                contents = file.path
+
+            if isinstance(contents, dict):
+                if not data.get(basename):
+                    data[basename] = {}
+
+                data[basename].update(contents)
+
+            elif isinstance(contents, basestring):
+                if not data.get(basename):
+                    data[basename] = ""
+
+                try:
+                    data[basename] += contents + "\n"
+                except TypeError:
+                    log.warning("om.read: Disregarding %r due to format "
+                        "not aligning with neighboring files" % file.path)
+                    continue
+            else:
+                raise ValueError("Contents of %r has not yet been accounted for in om.read()")
+
+    return data
 
 
 def delete(root, max_retries=10):
@@ -62,7 +95,6 @@ def delete(root, max_retries=10):
             time.sleep(0.1)
             log.debug("Retired %i time(s) for %s" % (retries, root))
 
-
     log.debug("Removed %s" % root)
 
 
@@ -73,4 +105,7 @@ if __name__ == '__main__':
     root = os.path.join(package, 'test', 'persist')
 
     print "Reading: %s " % root
-    print om.read(root)
+    data = om.read(root)
+    for channel in data:
+        print channel
+        print "\t%s" % data.get(channel),
