@@ -54,8 +54,7 @@ class AbstractPath(object):
         if parent:
             parent.addchild(self)
 
-        if "-" in self.basename:
-            raise ValueError('Invalid character ("-") provided')
+        assert "-" not in self.basename
 
     def __str__(self):
         return str(self.basename)
@@ -166,7 +165,7 @@ class AbstractPath(object):
         current_parent = self.parent
         while current_parent.basename != parent:
             if current_parent.basename == constant.Meta:
-                self.log.warning(".meta root reached")
+                self.log.debug(".meta root reached")
                 return None
 
             current_parent = current_parent.parent
@@ -276,27 +275,36 @@ class AbstractParent(AbstractPath):
 
     @property
     def children(self):
+        """Return children using relative paths
+
+        Each child of `self` is relative to `self.path` and are instanced as such.
+        Such that 
+            child.path == full path 
+            child._path == relative path
+
+        """
+
         path = self.path
         if os.path.exists(path):
             if os.path.isdir(path):
-                for child in os.listdir(path):
-                    if child.startswith(".") or child in constant.HiddenFiles:
-                        self.log.debug("Skipping hidden folder: '%s'" % os.path.join(path, child))
+                for child_path in os.listdir(path):
+                    if child_path.startswith(".") or child_path in constant.HiddenFiles:
+                        self.log.debug("Skipping hidden folder: '%s'" % os.path.join(path, child_path))
                         continue
 
-                    fullpath = os.path.join(path, child)
+                    fullpath = os.path.join(path, child_path)
+                    # print fullpath
                     
-                    # If the physical child on disk already existed
+                    # If the physical child_path on disk already existed
                     # as a logical child of this instance, don't add
                     # it again.
                     if fullpath in [child.path for child in self._children]:
-                        self.log.debug("'%r' already virtual, skipping" % child)
+                        self.log.debug("'%r' already virtual, skipping" % child_path)
                         continue
 
-                    obj = Factory.create(fullpath)
-                    # obj._parent = self
+                    obj = Factory.determine(fullpath)
                     if obj:
-                        self._children.append(obj)
+                        obj(child_path, self)
 
         return self._children
 
@@ -341,7 +349,7 @@ class File(AbstractPath):
     @data.setter
     def data(self, data):
         self._data = data
-        self.log.debug('%r set to "%s"' % (self, self.data))
+        # self.log.debug('%r set to "%s"' % (self, self.data))
 
     def read(self):
         """`self.path` ==> `self.data`
@@ -402,21 +410,13 @@ class File(AbstractPath):
             p.close()
         else:
             self.log.warning("Could not hide .meta folder on this OS: '%s'" % os.name)
+        self.log.debug("Successfully wrote to %s" % self.path)
+
 
 class Factory:
     @classmethod
-    def create(cls, path):
-        """Return object based on `path`
-
-        Pre-conditions
-            `path` must exist
-
-        Post-conditions
-            Output is an object if valid
-            Output is None if invalid
-
-        """
-
+    def determine(cls, path):
+        """Return appropriate class based on `path`"""
         if not os.path.exists(path):
             raise OSError('"%s" not found' % path)
 
@@ -425,10 +425,6 @@ class Factory:
         ext = os.path.splitext(path)[1]
 
         if os.path.isdir(path):
-            # If path is a .meta directory
-            if os.path.basename(path) == constant.Meta:
-                return Folder(os.path.dirname(path))
-
             # Otherwise, inspect it's children
             children = os.listdir(path)
 
@@ -443,9 +439,9 @@ class Factory:
                     if not ext:
                         log.debug('Invalid channel found within metadata folder: %s' % path)
                         return None
-                    return Channel(path)
+                    return Channel
 
-                return Folder(path)
+                return Folder
 
             if os.path.basename(parent) == constant.Meta:
                 # Folders within a metadata folder are
@@ -455,7 +451,7 @@ class Factory:
                     # ..but only channels with an extension are valid
                     log.debug('Invalid channel found within metadata folder: %s' % path)
                     return None
-                return Channel(path)
+                return Channel
         else:
             # If it isn't a folder, it's a file.
             #
@@ -470,10 +466,30 @@ class Factory:
                     log.debug('Invalid file found within channel: %s' % path)
                     return None
 
-                return File(path)
+                return File
 
         log.debug("Can't figure out '%s'" % path)
         return None
+        
+        
+    @classmethod
+    def create(cls, path):
+        """Return object based on `path`
+
+        Pre-conditions
+            `path` must exist
+
+        Post-conditions
+            Output is an object if valid
+            Output is None if invalid
+
+        """
+        # If path is a .meta directory
+        if os.path.basename(path) == constant.Meta:
+            path = os.path.dirname(path)
+        
+        obj = cls.determine(path)
+        return obj(path) if obj else None
 
 
 if __name__ == '__main__':
@@ -481,12 +497,13 @@ if __name__ == '__main__':
     root = os.path.join(cwd, 'test', 'persist')
     
     # Existing folder
-    folder = Folder(root)
+    folder = Factory.determine(root)(root)
     channel = folder.children[0]
-    file = channel.children[0]
-    # print channel.path
+    # file = channel.children[0]
+    print channel.path
     # print channel.parent
-    print file.findparent('.ka')
+    # print folder.children
+    # print file.findparent('.ka')
     # for channel in folder:
     #     print channel
     #     for file in channel:
