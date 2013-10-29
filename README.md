@@ -1,13 +1,15 @@
 ![Open Metadata](logo.png) 
 
-Open Metadata is a cross-platform, hierarchical metadata API for storage and retrieval of any format of any size and complexity via your file-system. It is open-source software and [available on GitHub](https://github.com/mottosso/openmetadata) under the [MIT license](http://opensource.org/licenses/MIT>).
+A cross-platform, hierarchical metadata API for storage and retrieval of any format of any size and complexity via your file-system. 
+Open-source software and [available on GitHub](https://github.com/mottosso/openmetadata) under the [MIT license](http://opensource.org/licenses/MIT>). 
+Contact [Marcus](mailto:marcus@pipi.io>) for more information
 
-[Contact](mailto:marcus@pipi.io>)
+**Introduction**
 
-# Introduction
-The people behind this project go under the name of [Abstract Factory](abstractfactory.io) and Open Metadata is a foundation layer of our software, such as [About](about.pipi.io) - a graphical front-end to Open Metadata.
+The people behind this project go under the name of [Abstract Factory](http://abstractfactory.io) and Open Metadata is a foundational layer of our software, such as [About](http://about.pipi.io).
 
-## Installation
+**Installation**
+
 To install, clone the repository into your PYTHONPATH or download it manually.
 ```bash
 $ git clone https://github.com/mottosso/openmetadata.git
@@ -21,9 +23,11 @@ In Python, access your metadata via the read() convenience method. It will retur
 >>> {'broadcast': {'message': 'hello, world'}}
 ```
 
-Tested with Python 2.6 and 2.7 under Linux (CentOS) and Windows (7) and OSX (10.8.5)
+Tested with Python 2.6 and 2.7 under Linux (CentOS) and Windows (7) and OSX (10.8.5).
 To run the tests, you also need [nose](https://pypi.python.org/pypi/nose/1.3.0)
 
-# Graphical Front-End
+**GUI**
+
 ![About](about_logo.png)
-End-users may communicate with the metadata using [About](about.pipi.io)
+
+[About](http://about.pipi.io) is a Graphical User Interface for Open Metadata. Find our more information about it [here](http://about.pipi.io)
