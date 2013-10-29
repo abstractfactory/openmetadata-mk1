@@ -25,7 +25,7 @@ def test_children(root=None):
     """
     
     root = root or om.Folder(persist)
-    if hasattr(root, 'children'):
+    if isinstance(root, om.lib.AbstractParent):
         for child in root.children:
             if isinstance(root, om.Folder):
                 # Children of Folders are always channels
@@ -37,6 +37,28 @@ def test_children(root=None):
             test_children(child)
     else:
         assert_is_instance(root, om.File)
+
+
+def test_relativepath():
+    """Children contain relative paths"""
+    folder = om.Folder(persist)
+    for child in folder:
+        relpath = child.relativepath
+        parentpath = folder.path
+        assert_equals(relpath, os.path.relpath(child.path, parentpath))
+
+    # Manually adding a child
+    channel = om.Channel(os.path.join(persist, r'.meta\chan.txt'), folder)
+    assert_equals(channel.relativepath, os.path.relpath(channel.path, folder.path))
+    
+    channel = om.Channel(os.path.join(dynamic, r'.meta\chan.txt'), folder)
+    assert_true(os.path.isabs(channel.relativepath))
+
+def test_extension():
+    folder = om.Folder(persist)
+    for channel in folder:
+        assert_equals(channel.extension, "." + channel.basename.rsplit(".", 1)[1])
+        assert_equals(channel.extension, os.path.splitext(channel.path)[1])
 
 
 def test_clear_file():
@@ -165,7 +187,7 @@ def test_instancefactory(root=None):
 
     root = root or om.Factory.create(stress)
     
-    if hasattr(root, 'children'):
+    if isinstance(root, om.lib.AbstractParent):
         for child in root.children:
             test_instancefactory(child)
 
@@ -288,51 +310,34 @@ def test_append_metadata_to_channel():
     om.delete(file_instance.path)
 
 
-# def test_hardlink_reference():
-#     """Create metadata using Hardlink reference"""
+# def test_unique_channelname():
+#     """Channel names must be unique"""
+#     folder = om.Folder(persist)
 
-#     meta = om.Folder(os.path.join(dynamic, om.constant.Meta))
-#     chan = om.Channel('chan.img', parent=meta)
-#     file = om.File('image1.png', parent=chan)
-    
-#     img = os.path.join(root, 'image1.png')
-#     data = om.reference.Hardlink(img)
+#     # These channels have the same name, even though they
+#     # differ in their extensions. This is not valid due to
+#     # convenience method om.read() returns channel names 
+#     # without extension.
+#     channel1 = om.Channel('unique1.txt', folder)
+#     channel2 = om.Channel('unique1.kvs', folder)
 
-#     file.data = data
-#     file.write()
+#     file1 = om.File('temp.txt', channel1)
+#     file2 = om.File('temp.txt', channel2)
 
-#     # Read it back in
-#     instance = om.Factory.create(file.path)
-#     assert_equals(instance.read(), file.path)
-
-#     om.delete(meta.path)
-
-
-# def test_copy_reference():
-#     """Create metadata using Copy reference"""
-
-#     meta = om.Folder(os.path.join(dynamic, om.constant.Meta))
-#     chan = om.Channel('chan.img', parent=meta)
-#     file = om.File('image1.png', parent=chan)
-    
-#     img = os.path.join(root, 'image1.png')
-#     data = om.reference.Copy(img)
-
-#     file.data = data
-#     file.write()
-
-#     # Read it back in
-#     instance = om.Factory.create(file.path)
-#     assert_equals(instance.read(), file.path)
-
-#     om.delete(meta.path)
+#     # file1.write()
+#     assert_raises(1/0, DivisionByZeroException)
 
 
 if __name__ == '__main__':
+    import logging
+    log = logging.getLogger('openmetadata')
+    log.setLevel(logging.ERROR)
+
     import nose
     nose.run(defaultTest=__name__)
     # print metadata
     # test_clear_folder()
+    # test_relativepath()
     # test_children()
     # test_om_read()
     # test_factory_folder()

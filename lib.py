@@ -52,9 +52,25 @@ class AbstractPath(object):
         self._parent = parent
 
         if parent:
-            parent.addchild(self)
+            assert isinstance(parent, AbstractPath)
 
-        assert "-" not in self.basename
+            # If there is a parent, `path` must be either
+            # relative or be a child of parent.
+            if os.path.isabs(path):
+                if path.startswith(parent.path):
+                    # If given path is the absolute path of an
+                    # already existing parent, shorten the path
+                    # to make it relative to that parent.
+                    relativepath = os.path.relpath(path, parent.path)
+                    self._path = relativepath
+                
+                else:
+                    log.warning('Disregarding "%s" as child "%s" was not '
+                        'part of its path' % (parent.path, path))
+                    self._parent = None
+    
+        if parent:
+            parent.addchild(self)
 
     def __str__(self):
         return str(self.basename)
@@ -75,6 +91,11 @@ class AbstractPath(object):
         if isinstance(other, AbstractPath):
             return other.path != self.path
         return other != self.path
+
+    @property
+    def name(self):
+        """Return name without extension"""
+        return self.basename.rsplit(".", 1)[0]
 
     @property
     def basename(self):
@@ -131,7 +152,15 @@ class AbstractPath(object):
 
     @property
     def path(self):
-        """Return full path of `self`, including any parent"""
+        """Return full path of `self`, including any parent
+
+        If there is a parent and `self._path` is absolute or contains
+        a slash, joining is aborted. As per:
+
+        http://docs.python.org/2/library/os.path.html#os.path.join
+
+        """
+
         path = self._path
         if self._parent:
             path = os.path.join(self._parent.path, path)
@@ -155,12 +184,18 @@ class AbstractPath(object):
         self._parent = parent
 
     @property
-    def ext(self):
+    def extension(self):
         """Return extension of `self.path`
 
         rsplit is used rather than os.path.splitext due
         to basenames starting with dot returning no extension,
         rather than the last part after the dot as expected
+
+        Returns extension prefixed with "." similarly to how
+        os.path.splitext does it.
+
+        E.g.
+        >>> ".ext"
 
         """
 
@@ -303,7 +338,6 @@ class AbstractParent(AbstractPath):
                         continue
 
                     fullpath = os.path.join(path, child_path)
-                    # print fullpath
                     
                     # If the physical child_path on disk already existed
                     # as a logical child of this instance, don't add
@@ -336,6 +370,10 @@ class Folder(AbstractParent):
     @property
     def path(self):
         return os.path.join(super(Folder, self).path, constant.Meta)
+
+    def addchild(self, child):
+        self._children.append(child)
+        child._parent = self
 
 
 class Channel(AbstractParent):
@@ -381,7 +419,7 @@ class File(AbstractPath):
             self.log.error(e)
             return self
         
-        processed = process.postprocess(raw, self.ext)
+        processed = process.postprocess(raw, self.extension)
         self._data = processed
 
         # Return self to allow for chaining of read() and data
@@ -399,7 +437,7 @@ class File(AbstractPath):
             raise TypeError("No parent set")
 
         raw = self._data
-        processed = process.preprocess(raw, self.ext)
+        processed = process.preprocess(raw, self.extension)
 
         # Ensure preceeding hierarchy exists,
         # otherwise writing will fail.
@@ -412,9 +450,11 @@ class File(AbstractPath):
 
         # Hide .meta folder
         if os.name == 'nt':
+            import ctypes
+
             root = self.findparent('.meta')
-            p = os.popen('attrib +h ' + root.path)
-            p.close()
+            if not ctypes.windll.kernel32.SetFileAttributesW(unicode(root.path), 2):
+                self.log.warning("Could not hide .meta folder")
         else:
             self.log.warning("Could not hide .meta folder on this OS: '%s'" % os.name)
         self.log.info("Successfully wrote to %s" % self.path)
@@ -507,6 +547,9 @@ if __name__ == '__main__':
     folder = Factory.determine(root)(root)
     channel = folder.children[0]
     file = channel.children[0]
+    file2 = File('temp.txt', channel)
+    file2.data = "Hello World"
+    file2.write()
     print file.parent.relativepath
     # print channel.parent
     # print folder.children

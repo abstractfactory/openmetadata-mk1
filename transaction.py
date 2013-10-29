@@ -37,13 +37,28 @@ def read(root):
     Returns dict() 
     {'channelname without extension': content}
 
+    Pre-conditions
+        - Parent channel name must not exist twice, not
+        regarding its extension.
+
+        E.g.
+            Legal:
+                CHAN_1.txt
+                CHAN_2.kvs
+
+            Not legal:
+                CHAN_1.txt
+                CHAN_1.kvs
+
+        This is otherwise legal in OM, but this convenience 
+        method relies on unique naming as it returns channels
+        without their extension.
+
     """
 
-    # convert root to folder
     folder = lib.Factory.create(root)
     assert isinstance(folder, lib.Folder)
 
-    # make empty dict
     data = {}
     for channel in folder:
         basename = os.path.splitext(channel.basename)[0]
