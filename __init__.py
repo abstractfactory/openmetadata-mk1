@@ -7,7 +7,8 @@ import sys
 
 # Initiate logging for main level
 log = logging.getLogger('openmetadata')
-log.setLevel(logging.INFO)
+log.setLevel(logging.WARNING)
+# log.setLevel(logging.INFO)
 # log.setLevel(logging.DEBUG)
 
 formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')

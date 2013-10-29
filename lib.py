@@ -80,6 +80,14 @@ class AbstractPath(object):
     def basename(self):
         return os.path.basename(self.path)
 
+    @property
+    def relativepath(self):
+        return self._path
+
+    @relativepath.setter
+    def relativepath(self, path):
+        self._path = path
+
     def exists(self):
         """Does the resolved path exist?
 
@@ -132,9 +140,11 @@ class AbstractPath(object):
 
     @property
     def parent(self):
-        if os.path.exists(self.path):
-            parent_path = os.path.dirname(self.path)
-            return Factory.create(parent_path)
+        if not self._parent:
+            if os.path.exists(self.path):
+                parent_path = os.path.dirname(self.path)
+                return Factory.create(parent_path)
+            return None
 
         return self._parent
 
@@ -244,7 +254,7 @@ class AbstractPath(object):
                             break
 
                         time.sleep(0.1)
-                        log.debug("Retired %i time(s) for %s" % (retries, path))
+                        log.info("Retired %i time(s) for %s" % (retries, path))
 
                 try:
                     # Store `path` as deleted copy.
@@ -255,9 +265,9 @@ class AbstractPath(object):
                     raise e
 
 
-            self.log.debug("clear(): Removed %s" % path)
+            self.log.info("clear(): Removed %s" % path)
         else:
-            self.log.debug("clear(): %r did not exist" % self)
+            self.log.warning("clear(): %r did not exist" % self)
 
 
 class AbstractParent(AbstractPath):
@@ -349,7 +359,6 @@ class File(AbstractPath):
     @data.setter
     def data(self, data):
         self._data = data
-        # self.log.debug('%r set to "%s"' % (self, self.data))
 
     def read(self):
         """`self.path` ==> `self.data`
@@ -386,10 +395,8 @@ class File(AbstractPath):
 
         """
 
-        if not self._data:
-            raise ValueError("No data to be written")
         if not self.parent:
-            raise ValueError("No parent set")
+            raise TypeError("No parent set")
 
         raw = self._data
         processed = process.preprocess(raw, self.ext)
@@ -410,7 +417,7 @@ class File(AbstractPath):
             p.close()
         else:
             self.log.warning("Could not hide .meta folder on this OS: '%s'" % os.name)
-        self.log.debug("Successfully wrote to %s" % self.path)
+        self.log.info("Successfully wrote to %s" % self.path)
 
 
 class Factory:
@@ -437,7 +444,7 @@ class Factory:
                     # then it's a channel that may be treated 
                     # as a folder.
                     if not ext:
-                        log.debug('Invalid channel found within metadata folder: %s' % path)
+                        log.warning('Invalid channel found within metadata folder: %s' % path)
                         return None
                     return Channel
 
@@ -449,7 +456,7 @@ class Factory:
 
                 if not ext:
                     # ..but only channels with an extension are valid
-                    log.debug('Invalid channel found within metadata folder: %s' % path)
+                    log.warning('Invalid channel found within metadata folder: %s' % path)
                     return None
                 return Channel
         else:
@@ -463,12 +470,12 @@ class Factory:
             if os.path.basename(possible_metafolder) == constant.Meta:
                 if not ext:
                     # ..but only channels with an extension are valid
-                    log.debug('Invalid file found within channel: %s' % path)
+                    log.warning('Invalid file found within channel: %s' % path)
                     return None
 
                 return File
 
-        log.debug("Can't figure out '%s'" % path)
+        log.warning("Can't figure out '%s'" % path)
         return None
         
         
@@ -499,8 +506,8 @@ if __name__ == '__main__':
     # Existing folder
     folder = Factory.determine(root)(root)
     channel = folder.children[0]
-    # file = channel.children[0]
-    print channel.path
+    file = channel.children[0]
+    print file.parent.relativepath
     # print channel.parent
     # print folder.children
     # print file.findparent('.ka')

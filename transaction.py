@@ -32,7 +32,13 @@ def update(root, data):
 
 
 def read(root):
-    """Convenience method for reading metadata"""
+    """Convenience method for reading metadata
+
+    Returns dict() 
+    {'channelname without extension': content}
+
+    """
+
     # convert root to folder
     folder = lib.Factory.create(root)
     assert isinstance(folder, lib.Folder)
@@ -40,7 +46,7 @@ def read(root):
     # make empty dict
     data = {}
     for channel in folder:
-        basename = channel.basename
+        basename = os.path.splitext(channel.basename)[0]
 
         for file in channel:
             contents = file.read().data
@@ -93,9 +99,9 @@ def delete(root, max_retries=10):
 
             import time
             time.sleep(0.1)
-            log.debug("Retired %i time(s) for %s" % (retries, root))
+            log.info("Retired %i time(s) for %s" % (retries, root))
 
-    log.debug("Removed %s" % root)
+    log.info("Removed %s" % root)
 
 
 if __name__ == '__main__':

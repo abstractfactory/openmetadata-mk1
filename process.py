@@ -95,21 +95,26 @@ class AbstractFormat(object):
 class DotTxt(AbstractFormat):
     @classmethod
     def pre(self, raw):
-        return str(raw)
+        return str(raw or '')
 
     @classmethod
     def post(self, raw):
         return str(raw)
 
 
+class DotMdw(DotTxt):
+    """Markdown is identical to Txt"""
+
+
 class DotJson(AbstractFormat):
     @classmethod
     def pre(self, raw):
+        processed = {}
+
         try:
             processed = json.dumps(raw, indent=4)
         except ValueError as e:
             log.debug(e)
-            processed = {}
         except TypeError as e:
             raise TypeError("Data corrupt | %s\n%s" % (raw, e))
 
@@ -175,6 +180,7 @@ class DotGdoc(AbstractFormat):
 
 
 mapping = {'.txt': DotTxt,
+           '.mdw': DotMdw,
            '.json': DotJson,
            '.ini': DotIni,
            '.gdoc': DotGdoc}
