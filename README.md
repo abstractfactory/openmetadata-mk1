@@ -1,7 +1,7 @@
 ![Open Metadata](logo.png) 
 
 A cross-platform, hierarchical metadata API for storage and retrieval of any format of any size and complexity via your file-system. 
-Open-source software and [available on GitHub](https://github.com/mottosso/openmetadata) under the [MIT license](http://opensource.org/licenses/MIT>).
+Open-source software and [available on GitHub](https://github.com/abstract-factory/openmetadata) under the [MIT license](http://opensource.org/licenses/MIT>).
 Contact [Marcus](mailto:marcus@abstractfactory.io>) for more information
 
 **Introduction**
