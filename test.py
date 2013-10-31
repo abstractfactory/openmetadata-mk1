@@ -55,6 +55,7 @@ def test_relativepath():
     assert_true(os.path.isabs(channel.relativepath))
 
 def test_extension():
+    """Test extension returns extension including dot"""
     folder = om.Folder(persist)
     for channel in folder:
         assert_equals(channel.extension, "." + channel.basename.rsplit(".", 1)[1])

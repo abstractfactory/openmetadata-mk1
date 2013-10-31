@@ -29,8 +29,8 @@ In Python, access your metadata via the read() convenience method. It will retur
 Tested with Python 2.6 and 2.7 under Linux (CentOS) and Windows (7) and OSX (10.8.5).
 To run the tests, you also need [nose](https://pypi.python.org/pypi/nose/1.3.0)
 
-**GUI**
+**Graphical User Interface**
 
-[About](http://abstractfactory.io/about) is a Graphical User Interface for Open Metadata. 
+[About](http://abstractfactory.io/about) is a front-end for Open Metadata. 
 
 More information [here](http://abstractfactory.io/about)
