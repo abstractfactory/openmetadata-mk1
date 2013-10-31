@@ -1,12 +1,12 @@
 ![Open Metadata](logo.png) 
 
 A cross-platform, hierarchical metadata API for storage and retrieval of any format of any size and complexity via your file-system. 
-Open-source software and [available on GitHub](https://github.com/mottosso/openmetadata) under the [MIT license](http://opensource.org/licenses/MIT>). 
-Contact [Marcus](mailto:marcus@pipi.io>) for more information
+Open-source software and [available on GitHub](https://github.com/mottosso/openmetadata) under the [MIT license](http://opensource.org/licenses/MIT>).
+Contact [Marcus](mailto:marcus@abstractfactory.io>) for more information
 
 **Introduction**
 
-The people behind this project go under the name of [Abstract Factory](http://abstractfactory.io) and Open Metadata is a foundational layer of our software, such as [About](http://about.pipi.io).
+The people behind this project go under the name of [Abstract Factory](http://abstractfactory.io) and Open Metadata is a foundational layer of our software, such as [About](http://abstractfactory.io/about).
 
 **Installation**
 
@@ -30,4 +30,4 @@ To run the tests, you also need [nose](https://pypi.python.org/pypi/nose/1.3.0)
 
 ![About](about_logo.png)
 
-[About](http://about.pipi.io) is a Graphical User Interface for Open Metadata. Find our more information about it [here](http://about.pipi.io)
+[About](http://abstractfactory.io/about) is a Graphical User Interface for Open Metadata. Find our more information about it [here](http://abstractfactory.io/about)
