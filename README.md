@@ -31,4 +31,6 @@ To run the tests, you also need [nose](https://pypi.python.org/pypi/nose/1.3.0)
 
 **GUI**
 
-[About](http://abstractfactory.io/about) is a Graphical User Interface for Open Metadata. Find our more information about it [here](http://abstractfactory.io/about)
+[About](http://abstractfactory.io/about) is a Graphical User Interface for Open Metadata. 
+
+More information [here](http://abstractfactory.io/about)
