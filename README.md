@@ -1,8 +1,11 @@
 ![Open Metadata](logo.png) 
 
-A cross-platform, hierarchical metadata API for storage and retrieval of any format of any size and complexity via your file-system. 
+### A metadata API for your folders.
+
+**Description**
+
+OM is a cross-platform, hierarchical metadata API written in Python for storage and retrieval of any file-format of any size and complexity. 
 Open-source software and [available on GitHub](https://github.com/abstract-factory/openmetadata) under the [MIT license](http://opensource.org/licenses/MIT>).
-Contact [Marcus](mailto:marcus@abstractfactory.io>) for more information
 
 **Introduction**
 
