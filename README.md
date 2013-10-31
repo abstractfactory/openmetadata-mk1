@@ -4,7 +4,7 @@
 
 **Description**
 
-A cross-platform, hierarchical metadata API written in Python for storage and retrieval of any file-format of any size and complexity. 
+A cross-platform, hierarchical metadata API written in Python for storage and retrieval of any data-format of any size and complexity. 
 Open-source software and [available on GitHub](https://github.com/abstract-factory/openmetadata) under the [MIT license](http://opensource.org/licenses/MIT>).
 
 **Introduction**
