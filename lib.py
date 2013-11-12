@@ -39,7 +39,7 @@ log = logging.getLogger('openmetadata.lib')
 VERSION = '0.16.0'
 
 
-def ishidden(name):
+def hidden(name):
     prefix = "__"
     return (name.startswith(prefix) and name.endswith(prefix))
 
@@ -104,7 +104,7 @@ class AbstractPath(object):
         
         # Special names (those with double underscores)
         # are returned without their double underscores.
-        if ishidden(name):
+        if hidden(name):
             name = name[2:-2]
 
         return name
@@ -214,11 +214,11 @@ class AbstractPath(object):
         return ".%s" % self.path.rsplit(".", 1)[-1]
 
     @property
-    def ishidden(self):
+    def hidden(self):
         """Paths prefixed and suffixed with double underscores are hidden"""
 
         name = self.basename.rsplit(".", 1)[0]
-        return ishidden(name)
+        return hidden(name)
 
     def findparent(self, parent=None):
         """Locate a parent up-stream by name `parent`"""
@@ -352,7 +352,7 @@ class AbstractParent(AbstractPath):
         if os.path.exists(path):
             if os.path.isdir(path):
                 for child_path in os.listdir(path):
-                    if child_path.startswith(".") or child_path in constant.HiddenFiles or ishidden(child_path):
+                    if child_path.startswith(".") or child_path in constant.HiddenFiles or hidden(child_path):
                         self.log.debug("Skipping hidden folder: '%s'" % os.path.join(path, child_path))
                         continue
 

@@ -321,7 +321,7 @@ def test_hidden():
 
     hidden = None
     for channel in folder:
-        if channel.ishidden:
+        if channel.hidden:
             hidden = channel
 
     assert_true(hidden is not None)
