@@ -61,31 +61,39 @@ def read(root):
 
     data = {}
     for channel in folder:
-        basename = os.path.splitext(channel.basename)[0]
+        data.update(read_channel(channel))
 
-        for file in channel:
-            contents = file.read().data
-            if not contents:
-                contents = file.path
+    return data
 
-            if isinstance(contents, dict):
-                if not data.get(basename):
-                    data[basename] = {}
 
-                data[basename].update(contents)
+def read_channel(channel):
+    # basename = os.path.splitext(channel.basename)[0]
+    name = channel.name
 
-            elif isinstance(contents, basestring):
-                if not data.get(basename):
-                    data[basename] = ""
+    data = {}
+    for file in channel:
+        contents = file.read().data
+        if not contents:
+            contents = file.path
 
-                try:
-                    data[basename] += contents + "\n"
-                except TypeError:
-                    log.warning("om.read: Disregarding %r due to format "
-                        "not aligning with neighboring files" % file.path)
-                    continue
-            else:
-                raise ValueError("Contents of %r has not yet been accounted for in om.read()")
+        if isinstance(contents, dict):
+            if not data.get(name):
+                data[name] = {}
+
+            data[name].update(contents)
+
+        elif isinstance(contents, basestring):
+            if not data.get(name):
+                data[name] = ""
+
+            try:
+                data[name] += contents + "\n"
+            except TypeError:
+                log.warning("om.read: Disregarding %r due to format "
+                    "not aligning with neighboring files" % file.path)
+                continue
+        else:
+            raise ValueError("Contents of %r has not yet been accounted for in om.read()")
 
     return data
 

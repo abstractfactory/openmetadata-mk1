@@ -39,6 +39,11 @@ log = logging.getLogger('openmetadata.lib')
 VERSION = '0.16.0'
 
 
+def ishidden(name):
+    prefix = "__"
+    return (name.startswith(prefix) and name.endswith(prefix))
+
+
 class AbstractPath(object):
     """Baseclass for anything that lives upon a path of some sort.
     This includes Folders, files but also database locations as they
@@ -95,7 +100,14 @@ class AbstractPath(object):
     @property
     def name(self):
         """Return name without extension"""
-        return self.basename.rsplit(".", 1)[0]
+        name = self.basename.rsplit(".", 1)[0]
+        
+        # Special names (those with double underscores)
+        # are returned without their double underscores.
+        if ishidden(name):
+            name = name[2:-2]
+
+        return name
 
     @property
     def basename(self):
@@ -200,6 +212,13 @@ class AbstractPath(object):
         """
 
         return ".%s" % self.path.rsplit(".", 1)[-1]
+
+    @property
+    def ishidden(self):
+        """Paths prefixed and suffixed with double underscores are hidden"""
+
+        name = self.basename.rsplit(".", 1)[0]
+        return ishidden(name)
 
     def findparent(self, parent=None):
         """Locate a parent up-stream by name `parent`"""
@@ -333,7 +352,7 @@ class AbstractParent(AbstractPath):
         if os.path.exists(path):
             if os.path.isdir(path):
                 for child_path in os.listdir(path):
-                    if child_path.startswith(".") or child_path in constant.HiddenFiles:
+                    if child_path.startswith(".") or child_path in constant.HiddenFiles or ishidden(child_path):
                         self.log.debug("Skipping hidden folder: '%s'" % os.path.join(path, child_path))
                         continue
 
@@ -472,7 +491,7 @@ class Factory:
         ext = os.path.splitext(path)[1]
 
         if os.path.isdir(path):
-            # Otherwise, inspect it's children
+            # Inspect it's children
             children = os.listdir(path)
 
             if constant.Meta in children:
@@ -499,6 +518,10 @@ class Factory:
                     log.warning('Invalid channel found within metadata folder: %s' % path)
                     return None
                 return Channel
+            
+            # Blank folders are future metadata containers.
+            return Folder
+
         else:
             # If it isn't a folder, it's a file.
             #
@@ -543,14 +566,15 @@ if __name__ == '__main__':
     cwd = os.getcwd()
     root = os.path.join(cwd, 'test', 'persist')
     
+    print Factory.create('c:\users\marcus')
     # Existing folder
-    folder = Factory.determine(root)(root)
-    channel = folder.children[0]
-    file = channel.children[0]
-    file2 = File('temp.txt', channel)
-    file2.data = "Hello World"
-    file2.write()
-    print file.parent.relativepath
+    # folder = Factory.determine(root)(root)
+    # channel = folder.children[0]
+    # file = channel.children[0]
+    # file2 = File('temp.txt', channel)
+    # file2.data = "Hello World"
+    # file2.write()
+    # print file.parent.relativepath
     # print channel.parent
     # print folder.children
     # print file.findparent('.ka')

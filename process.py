@@ -112,6 +112,7 @@ class DotJson(AbstractFormat):
         processed = {}
 
         try:
+            print "Processing %s" % raw
             processed = json.dumps(raw, indent=4)
         except ValueError as e:
             log.debug(e)

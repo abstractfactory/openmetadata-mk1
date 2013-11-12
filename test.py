@@ -310,6 +310,29 @@ def test_append_metadata_to_channel():
 
     om.delete(file_instance.path)
 
+def test_hidden():
+    """Special channels works
+
+    Persist has a hidden channel called __hidden__
+
+    """
+
+    folder = om.Folder(persist)
+
+    hidden = None
+    for channel in folder:
+        if channel.ishidden:
+            hidden = channel
+
+    assert_true(hidden is not None)
+
+
+def test_read_channel():
+    """Reading channel individually"""
+    folder = om.Folder(persist)
+    channel = folder.children[0]
+    
+    assert_true(isinstance(om.transaction.read_channel(channel), dict))
 
 # def test_unique_channelname():
 #     """Channel names must be unique"""
@@ -336,6 +359,7 @@ if __name__ == '__main__':
 
     import nose
     nose.run(defaultTest=__name__)
+
     # print metadata
     # test_clear_folder()
     # test_relativepath()
@@ -351,3 +375,4 @@ if __name__ == '__main__':
     # test_append_metadata_to_channel()
     # test_hardlink_reference()
     # test_copy_reference()
+    # test_read_channel()
