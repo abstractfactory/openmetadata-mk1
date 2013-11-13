@@ -36,8 +36,6 @@ from openmetadata import process
 
 log = logging.getLogger('openmetadata.lib')
 
-VERSION = '0.16.0'
-
 
 def hidden(name):
     prefix = "__"
@@ -174,8 +172,38 @@ class AbstractPath(object):
         """
 
         path = self._path
-        if self._parent:
-            path = os.path.join(self._parent.path, path)
+        parent = self._parent
+
+        if parent:
+            parent_path = parent.path
+
+            """
+            When querying a child of Folder, return the full
+            path of that child. 
+            
+            E.g. \folder\.meta\channel1.txt
+ 
+            However, querying the path of Folder returns
+            the logical path.
+            
+            E.g. \folder
+            
+            This is so that we can ask a Folder for its parent
+            and recieve the result we would expect.
+            
+            E.g. Folder('\parent\of\folder').parent
+            = Folder('\parent\of')
+            
+            As opposed to
+            Folder('\parent\of\folder\.meta').parent
+            Folder('\parent\of\folder')
+
+            """
+
+            if isinstance(parent, Folder):
+                parent_path = os.path.join(parent_path, constant.Meta)
+
+            path = os.path.join(parent_path, path)
 
         return path
 
@@ -191,9 +219,27 @@ class AbstractPath(object):
 
     @parent.setter
     def parent(self, parent):
-        assert not os.path.exists(self.path), "Can't change the parent of an existing object"
+        if os.path.exists(self.path):
+            raise ValueError("Can't change the parent of an existing object")
+
         parent._children.append(self)
         self._parent = parent
+
+    @property
+    def folder(self):
+        """Return first-found parent of type Folder"""
+        folder = self
+
+        count = 0
+        while not isinstance(folder, Folder):
+            folder = folder.parent
+
+            if count > 100:
+                raise ValueError("Something's not right. The layout of"
+                    " %s is invalid" % self.path)
+            count += 1
+
+        return folder
 
     @property
     def extension(self):
@@ -338,21 +384,77 @@ class AbstractParent(AbstractPath):
             yield child
 
     @property
+    def data(self):
+        """Read all contained childrens metadata
+
+        This means to find each File and return each of its
+        contained data. Each File still needs to update their
+        content via a call to .read(), which is also available
+        in AbstractParent
+
+        """
+
+        metadata = {}
+        for child in self:
+            metadata.update({self.name: child.data})
+        return metadata
+
+    @data.setter
+    def data(self, data):
+        """Slightly more complex
+
+        Interpret `data` and reverse-engineer it into individual
+        Channel and File objects. Then, inject `data` into its 
+        corresponding object.
+
+        """
+
+        raise NotImplementedError
+
+    def read(self):
+        """Update contents of all contained File objects
+
+        This reads each individual File from disk and updates its
+        content. This must be done each time a file on disk is
+        changed.
+
+        """
+
+        for child in self:
+            child.read()
+
+        return self
+
+    @property
     def children(self):
         """Return children using relative paths
 
         Each child of `self` is relative to `self.path` and are instanced as such.
-        Such that 
-            child.path == full path 
+
+        Such that
+            child.path == full path
             child._path == relative path
+
+        Note:
+            We must perform some needless checks per request due
+            to `self` not necessarily being a physical item on disk. 
+            It may be an in-memory item, in which case os.path would fail
+            to recognise it, yet it may still have children. I.e. other
+            in-memory children.
 
         """
 
         path = self.path
+
+        if isinstance(self, Folder):
+            # Looking for children in a Folder means to look
+            # within its meta folder.
+            path = os.path.join(path, constant.Meta)
+
         if os.path.exists(path):
             if os.path.isdir(path):
                 for child_path in os.listdir(path):
-                    if child_path.startswith(".") or child_path in constant.HiddenFiles or hidden(child_path):
+                    if child_path.startswith(".") or child_path in constant.HiddenFiles:
                         self.log.debug("Skipping hidden folder: '%s'" % os.path.join(path, child_path))
                         continue
 
@@ -379,16 +481,43 @@ class AbstractParent(AbstractPath):
         self._children.remove(child)
         child._parent = None
 
+    @property
+    def hiddenchildren(self):
+        """Return only hidden children
+
+        Todo
+            Currently, in-memory hidden children are not included.
+
+        """
+
+        path = self.path
+
+        if not os.path.exists(path):
+            return
+        if not os.path.isdir(path):
+            return
+
+        children = []
+        for child_path in os.listdir(path):
+            child_name, child_ext = os.path.splitext(child_path)
+            if hidden(child_name):
+                fullpath = os.path.join(path, child_path)
+
+                obj = Factory.determine(fullpath)
+                if not obj:
+                    continue
+
+                obj = obj(child_path, self)
+                children.append(obj)
+
+        return children
+
 
 class Folder(AbstractParent):
     log = logging.getLogger('openmetadata.lib.Folder')
 
     def __init__(self, path, parent=None):
         super(Folder, self).__init__(path, parent)
-
-    @property
-    def path(self):
-        return os.path.join(super(Folder, self).path, constant.Meta)
 
     def addchild(self, child):
         self._children.append(child)
@@ -400,6 +529,71 @@ class Channel(AbstractParent):
 
     def __init__(self, path, parent=None):
         super(Channel, self).__init__(path, parent)
+        
+        # Enable/disable cascading accumulation of `Channel`
+        # An implementation of the Property-Pattern as discussed here:
+        #
+        # http://steve-yegge.blogspot.co.uk/2008/10/universal-design-pattern.html
+        self.cascading = False
+
+    def read(self, cascading=False):
+        # return super(Channel, self).read()
+        
+        # def cascade(all_metadata):
+        #     # Get metadata from current channel
+        #     super(Channel, self).read()
+        #     metadata = self.data
+
+        #     all_metadata = all_metadata or []
+        #     all_metadata.append(metadata)
+
+        #     # Recursively step up the hierarchy and append
+        #     # metadata for each channel with identical name as
+        #     # `self`, until you hit a node with the optional
+        #     # variable, 'isRoot', telling it to stop traversing.
+        #     def recurse(p):
+        #         metadata_channel = metadata.get('metadata', {})
+        #         root_property = metadata_channel.get('isRoot')
+        #         if root_property:
+        #             return
+
+        #         folder = self.parent
+        #         if folder:
+        #             return folder.cascade(p)
+
+        #     recurse(all_metadata)
+
+        #     return all_metadata
+
+        # The following algorithm is based on this answer:
+        # http://stackoverflow.com/questions/3232943/update-value-of-a-nested-dictionary-of-varying-depth
+        # all_metadata = cascade()
+        all_metadata = [super(Channel, self).read().data]
+        all_metadata.reverse()
+            
+        import collections
+
+        def update(d, u):
+            for k, v in u.iteritems():
+                if isinstance(v, collections.Mapping):
+                    r = update(d.get(k, {}), v)
+                    d[k] = r
+                else:
+                    d[k] = u[k]
+            return d
+
+        metadata = {}
+        for prop in all_metadata:
+            update(metadata, prop)
+        
+        # Finally, drop top-level channel name as it is implied
+        # via the method-call.
+        if metadata:
+            assert self.name in metadata.keys()
+
+        metadata = metadata.get(self.name, {})
+        
+        return metadata
 
 
 class File(AbstractPath):
@@ -438,7 +632,15 @@ class File(AbstractPath):
             self.log.error(e)
             return self
         
-        processed = process.postprocess(raw, self.extension)
+        try:
+            processed = process.postprocess(raw, self.extension)
+        except ValueError as e:
+            self.log.error("File empty: %s" % self.path)
+            processed = {}
+        except TypeError as e:
+            self.log.error(e)
+            processed = {}
+
         self._data = processed
 
         # Return self to allow for chaining of read() and data
@@ -471,7 +673,7 @@ class File(AbstractPath):
         if os.name == 'nt':
             import ctypes
 
-            root = self.findparent('.meta')
+            root = self.folder
             if not ctypes.windll.kernel32.SetFileAttributesW(unicode(root.path), 2):
                 self.log.warning("Could not hide .meta folder")
         else:
@@ -564,52 +766,4 @@ class Factory:
 
 if __name__ == '__main__':
     cwd = os.getcwd()
-    root = os.path.join(cwd, 'test', 'persist')
-    
-    print Factory.create('c:\users\marcus')
-    # Existing folder
-    # folder = Factory.determine(root)(root)
-    # channel = folder.children[0]
-    # file = channel.children[0]
-    # file2 = File('temp.txt', channel)
-    # file2.data = "Hello World"
-    # file2.write()
-    # print file.parent.relativepath
-    # print channel.parent
-    # print folder.children
-    # print file.findparent('.ka')
-    # for channel in folder:
-    #     print channel
-    #     for file in channel:
-    #         print "\t%s" % file
-    
-    # Add channel to it
-    # channel = Channel('newchannel.txt', folder)
-    # file = File('document.txt', channel)
-    # file.data = "This is some data"
-
-    # print file.path in channel.children
-    # # file.write()
-    # channel.clear()
-    # file.write()
-    # channel.clear()
-    # print "Removed %s" % channel.path
-
-    # Make new metadata in empty folder
-    # root = os.path.join(cwd, 'test', 'dynamic')
-    # folder = Folder(os.path.join(root, 'neeew'))
-    # channel = Channel('chan1.txt', folder)
-    # file = File('document.txt', channel)
-
-    # file.data = "Some data, woho!"
-
-    # file.write()
-
-    # Edit existing file
-    # folder = Folder(root)
-    # channel = folder.children[0]
-    # file = channel.children[1]
-    # file.read()
-    # file.data += "\nSome additional data"
-    # file.write()
-    # print "Written to %s" % file.path
+    root = os.path.join(cwd, 'test', 'dynamic')

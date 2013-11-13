@@ -43,13 +43,15 @@ def test_relativepath():
     """Children contain relative paths"""
     folder = om.Folder(persist)
     for child in folder:
-        relpath = child.relativepath
-        parentpath = folder.path
-        assert_equals(relpath, os.path.relpath(child.path, parentpath))
+        om_relpath = child.relativepath
+        parent_path = os.path.join(folder.path, om.constant.Meta)
+        manual_relpath = os.path.relpath(child.path, parent_path)
+
+        assert_equals(om_relpath, manual_relpath)
 
     # Manually adding a child
     channel = om.Channel(os.path.join(persist, r'.meta\chan.txt'), folder)
-    assert_equals(channel.relativepath, os.path.relpath(channel.path, folder.path))
+    assert_equals(channel.relativepath, os.path.relpath(channel.path, os.path.join(folder.path, om.constant.Meta)))
     
     channel = om.Channel(os.path.join(dynamic, r'.meta\chan.txt'), folder)
     assert_true(os.path.isabs(channel.relativepath))
@@ -327,12 +329,17 @@ def test_hidden():
     assert_true(hidden is not None)
 
 
-def test_read_channel():
-    """Reading channel individually"""
+def test_hidden_channels():
+    """Hidden channels works
+
+    Pre-conditions:
+        "persist" has atleast one hidden folder
+
+    """
+
     folder = om.Folder(persist)
-    channel = folder.children[0]
-    
-    assert_true(isinstance(om.transaction.read_channel(channel), dict))
+    hidden = folder.hiddenchildren
+    assert_true(hidden is not [])
 
 # def test_unique_channelname():
 #     """Channel names must be unique"""
@@ -352,6 +359,25 @@ def test_read_channel():
 #     assert_raises(1/0, DivisionByZeroException)
 
 
+def test_read_channel():
+    """Read individual channel"""
+    folder = om.Folder(persist)
+
+    metadata = {}
+    for channel in folder:
+        channel.read()
+        metadata.update(channel.data)
+
+    print metadata
+
+
+def test_read_folder():
+    """Read full folder"""
+    folder = om.Folder(persist)
+    folder.read()
+    folder.data
+
+
 if __name__ == '__main__':
     import logging
     log = logging.getLogger('openmetadata')
@@ -360,6 +386,7 @@ if __name__ == '__main__':
     import nose
     nose.run(defaultTest=__name__)
 
+    # test_relativepath()
     # print metadata
     # test_clear_folder()
     # test_relativepath()
@@ -376,3 +403,4 @@ if __name__ == '__main__':
     # test_hardlink_reference()
     # test_copy_reference()
     # test_read_channel()
+    # test_hidden_channels()

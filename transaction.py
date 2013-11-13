@@ -61,41 +61,41 @@ def read(root):
 
     data = {}
     for channel in folder:
-        data.update(read_channel(channel))
+        data.update(channel.read().data)
 
     return data
 
 
-def read_channel(channel):
-    # basename = os.path.splitext(channel.basename)[0]
-    name = channel.name
+# def read_channel(channel):
+#     # basename = os.path.splitext(channel.basename)[0]
+#     name = channel.name
 
-    data = {}
-    for file in channel:
-        contents = file.read().data
-        if not contents:
-            contents = file.path
+#     data = {}
+#     for file in channel:
+#         contents = file.read().data
+#         if not contents:
+#             contents = file.path
 
-        if isinstance(contents, dict):
-            if not data.get(name):
-                data[name] = {}
+#         if isinstance(contents, dict):
+#             if not data.get(name):
+#                 data[name] = {}
 
-            data[name].update(contents)
+#             data[name].update(contents)
 
-        elif isinstance(contents, basestring):
-            if not data.get(name):
-                data[name] = ""
+#         elif isinstance(contents, basestring):
+#             if not data.get(name):
+#                 data[name] = ""
 
-            try:
-                data[name] += contents + "\n"
-            except TypeError:
-                log.warning("om.read: Disregarding %r due to format "
-                    "not aligning with neighboring files" % file.path)
-                continue
-        else:
-            raise ValueError("Contents of %r has not yet been accounted for in om.read()")
+#             try:
+#                 data[name] += contents + "\n"
+#             except TypeError:
+#                 log.warning("om.read: Disregarding %r due to format "
+#                     "not aligning with neighboring files" % file.path)
+#                 continue
+#         else:
+#             raise ValueError("Contents of %r has not yet been accounted for in om.read()")
 
-    return data
+#     return data
 
 
 def delete(root, max_retries=10):
