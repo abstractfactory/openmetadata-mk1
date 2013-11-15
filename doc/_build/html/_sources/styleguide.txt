@@ -1,7 +1,0 @@
-Contributing
-===================
-
-In addition to following the `PEP-08 <http://www.python.org/dev/peps/pep-0008/>`_ Python Style Guide, these guidelines are also encouraged.
-
-Referenes:
-http://contribute.jquery.org/style-guide/js/#linting
