@@ -1,5 +1,5 @@
 import constant, reference
-from transaction import write, read, update, delete
+from transaction import write, read, update, delete, cascade
 from lib import Folder, Channel, File, Factory
 
 import logging

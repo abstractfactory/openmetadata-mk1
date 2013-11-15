@@ -95,6 +95,7 @@ def delete(root, max_retries=10):
 
 def findchannels(folder, term, result=None):
     """Return channels matching `term` up-wards through hierarchy"""
+    assert isinstance(folder, lib.Folder)
     result = result or []
 
     # Note: We can only cascade channels of type .kvs
@@ -124,7 +125,7 @@ def findchannels(folder, term, result=None):
                 isroot = True
 
         if not isroot:
-            findchannels(parent, term, result)
+            return findchannels(parent, term, result)
 
     return result
 
@@ -165,6 +166,6 @@ if __name__ == '__main__':
 
     package = os.getcwd()
     root = os.path.join(package, 'test', 'persist')
-    # root = r's:\content\jobs\test\content\shots\1000'
+    root = om.Folder(r's:\content\jobs\test\content\shots')
 
-    print read(root)
+    print cascade(root, 'properties')

@@ -680,6 +680,7 @@ class Channel(AbstractParent):
         assert(isinstance(data, dict))
 
         for key, value in data.iteritems():
+            assert isinstance(key, basestring)
             new_file = File(key + file_extension, self)
             new_file.data = value
             self._localchildren.add(new_file)
