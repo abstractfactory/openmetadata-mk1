@@ -1,13 +1,10 @@
 Meta = '.meta'
 
-FileExtension_PlainText = '.txt'
-FileExtension_Json = '.json'
-FileExtension_Ini = '.ini'
-
-ChannelExtension_PlainText = '.txt'
-ChannelExtension_KeyValue = '.kvs'
-ChannelExtension_Images = '.img'
-ChannelExtension_Video = '.vid'
+Txt = '.txt'
+Kvs = '.kvs'
+Img = '.img'
+Vid = '.vid'
+Mdw = '.mdw'
 
 # In addition to files and folders prefixed with ".",
 # also keep these basenames hidden.

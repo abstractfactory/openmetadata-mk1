@@ -14,6 +14,7 @@ from __future__ import absolute_import
 import os
 import logging
 import shutil
+import collections
 
 from openmetadata import lib
 
@@ -37,9 +38,14 @@ def read(root):
     Returns dict() 
     {'channelname without extension': content}
 
-    Pre-conditions
-        - Parent channel name must not exist twice, not
-        regarding its extension.
+    As opposed to calling Folder.read().data, this method blends
+    Files together, disregarding if a channel has multiple files.
+
+    They are blended in an alphabetical order, last one overwrites
+    first one.
+
+    This introduces some interesting limitations:
+        - Parent channel must not exist twice
 
         E.g.
             Legal:
@@ -50,52 +56,11 @@ def read(root):
                 CHAN_1.txt
                 CHAN_1.kvs
 
-        This is otherwise legal in OM, but this convenience 
-        method relies on unique naming as it returns channels
-        without their extension.
-
     """
 
     folder = lib.Factory.create(root)
     assert isinstance(folder, lib.Folder)
-
-    data = {}
-    for channel in folder:
-        data.update(channel.read().data)
-
-    return data
-
-
-# def read_channel(channel):
-#     # basename = os.path.splitext(channel.basename)[0]
-#     name = channel.name
-
-#     data = {}
-#     for file in channel:
-#         contents = file.read().data
-#         if not contents:
-#             contents = file.path
-
-#         if isinstance(contents, dict):
-#             if not data.get(name):
-#                 data[name] = {}
-
-#             data[name].update(contents)
-
-#         elif isinstance(contents, basestring):
-#             if not data.get(name):
-#                 data[name] = ""
-
-#             try:
-#                 data[name] += contents + "\n"
-#             except TypeError:
-#                 log.warning("om.read: Disregarding %r due to format "
-#                     "not aligning with neighboring files" % file.path)
-#                 continue
-#         else:
-#             raise ValueError("Contents of %r has not yet been accounted for in om.read()")
-
-#     return data
+    return folder.read().data
 
 
 def delete(root, max_retries=10):
@@ -127,14 +92,79 @@ def delete(root, max_retries=10):
     log.info("Removed %s" % root)
 
 
+
+def findchannels(folder, term, result=None):
+    """Return channels matching `term` up-wards through hierarchy"""
+    result = result or []
+
+    # Note: We can only cascade channels of type .kvs
+
+    current_channel = None
+    # Look for `term` within folder
+    for _channel in folder:
+        if _channel.name == term and _channel.extension == '.kvs':
+            result.append(_channel)
+            current_channel = _channel
+
+    # Recurse
+    parent = folder.parent
+    if parent:
+        # Before we recurse, ensure this is not a root.
+        isroot = False
+
+        # TODO
+        # Find a way to optimize this. Channel is being read here
+        # to find the isRoot property which is used solely to
+        # determine whether or not to continue searching.
+        # This is an expensive operation, and whats worse,
+        # the channel is being re-read in `cascade`.
+        if current_channel:
+            data = current_channel.read().data or {}
+            if data.get('isRoot') is True:
+                isroot = True
+
+        if not isroot:
+            findchannels(parent, term, result)
+
+    return result
+
+
+def cascade(folder, term):
+    """Merge metadata of each channel matching `term` up-wards through hierarchy"""
+    hierarchy = findchannels(folder, term)
+    hierarchy.reverse()
+
+    # An implementation of the Property-Pattern as discussed here:
+    # http://steve-yegge.blogspot.co.uk/2008/10/universal-design-pattern.html
+    metadata_hierarchy = []
+    for _channel in hierarchy:
+        _channel.read()
+        _data = _channel.data or {}
+        metadata_hierarchy.append(_data)
+
+    # The following algorithm is based on this answer:
+    # http://stackoverflow.com/questions/3232943/update-value-of-a-nested-dictionary-of-varying-depth
+    def update(d, u):
+        for k, v in u.iteritems():
+            if isinstance(v, collections.Mapping):
+                r = update(d.get(k, {}), v)
+                d[k] = r
+            else:
+                d[k] = u[k]
+        return d
+
+    metadata = {}
+    for _metadata in metadata_hierarchy:
+        update(metadata, _metadata)
+
+    return metadata
+
+
 if __name__ == '__main__':
     import openmetadata as om
 
     package = os.getcwd()
     root = os.path.join(package, 'test', 'persist')
+    # root = r's:\content\jobs\test\content\shots\1000'
 
-    print "Reading: %s " % root
-    data = om.read(root)
-    for channel in data:
-        print channel
-        print "\t%s" % data.get(channel),
+    print read(root)

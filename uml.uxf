@@ -5,7 +5,7 @@
     <type>com.umlet.element.Relation</type>
     <coordinates>
       <x>750</x>
-      <y>170</y>
+      <y>110</y>
       <w>280</w>
       <h>470</h>
     </coordinates>
@@ -16,7 +16,7 @@
     <type>com.umlet.element.Relation</type>
     <coordinates>
       <x>650</x>
-      <y>410</y>
+      <y>350</y>
       <w>150</w>
       <h>230</h>
     </coordinates>
@@ -27,7 +27,7 @@
     <id>UMLClass</id>
     <coordinates>
       <x>0</x>
-      <y>370</y>
+      <y>310</y>
       <w>310</w>
       <h>270</h>
     </coordinates>
@@ -62,7 +62,7 @@ bg=yellow
     <type>com.umlet.element.Class</type>
     <coordinates>
       <x>660</x>
-      <y>60</y>
+      <y>0</y>
       <w>220</w>
       <h>140</h>
     </coordinates>
@@ -87,7 +87,7 @@ bg=light_gray</panel_attributes>
     <type>com.umlet.element.custom.Node</type>
     <coordinates>
       <x>0</x>
-      <y>160</y>
+      <y>100</y>
       <w>310</w>
       <h>80</h>
     </coordinates>
@@ -99,7 +99,7 @@ bg=default</panel_attributes>
     <id>UMLClass</id>
     <coordinates>
       <x>0</x>
-      <y>100</y>
+      <y>40</y>
       <w>130</w>
       <h>40</h>
     </coordinates>
@@ -114,7 +114,7 @@ bg=yellow
     <type>com.umlet.element.Relation</type>
     <coordinates>
       <x>800</x>
-      <y>630</y>
+      <y>570</y>
       <w>150</w>
       <h>50</h>
     </coordinates>
@@ -127,7 +127,7 @@ bg=orange</panel_attributes>
     <type>com.umlet.element.custom.Node</type>
     <coordinates>
       <x>0</x>
-      <y>250</y>
+      <y>190</y>
       <w>310</w>
       <h>40</h>
     </coordinates>
@@ -139,7 +139,7 @@ bg=default</panel_attributes>
     <type>com.umlet.element.Class</type>
     <coordinates>
       <x>930</x>
-      <y>620</y>
+      <y>560</y>
       <w>110</w>
       <h>80</h>
     </coordinates>
@@ -156,7 +156,7 @@ bg=orange</panel_attributes>
     <type>com.umlet.element.Class</type>
     <coordinates>
       <x>720</x>
-      <y>620</y>
+      <y>560</y>
       <w>110</w>
       <h>80</h>
     </coordinates>
@@ -170,7 +170,7 @@ bg=orange</panel_attributes>
     <type>com.umlet.element.Relation</type>
     <coordinates>
       <x>510</x>
-      <y>410</y>
+      <y>350</y>
       <w>160</w>
       <h>220</h>
     </coordinates>
@@ -181,7 +181,7 @@ bg=orange</panel_attributes>
     <type>com.umlet.element.custom.Node</type>
     <coordinates>
       <x>0</x>
-      <y>300</y>
+      <y>240</y>
       <w>310</w>
       <h>40</h>
     </coordinates>
@@ -193,7 +193,7 @@ bg=default</panel_attributes>
     <type>com.umlet.element.Relation</type>
     <coordinates>
       <x>570</x>
-      <y>630</y>
+      <y>570</y>
       <w>170</w>
       <h>50</h>
     </coordinates>
@@ -206,7 +206,7 @@ bg=orange</panel_attributes>
     <type>com.umlet.element.Class</type>
     <coordinates>
       <x>490</x>
-      <y>620</y>
+      <y>560</y>
       <w>110</w>
       <h>80</h>
     </coordinates>
@@ -219,7 +219,7 @@ bg=orange</panel_attributes>
     <type>com.umlet.element.Class</type>
     <coordinates>
       <x>550</x>
-      <y>300</y>
+      <y>240</y>
       <w>220</w>
       <h>140</h>
     </coordinates>
@@ -237,11 +237,117 @@ bg=light_gray</panel_attributes>
     <type>com.umlet.element.Relation</type>
     <coordinates>
       <x>630</x>
-      <y>170</y>
+      <y>110</y>
       <w>120</w>
       <h>150</h>
     </coordinates>
     <panel_attributes>lt=&lt;&lt;.</panel_attributes>
     <additional_attributes>30;130;100;30</additional_attributes>
+  </element>
+  <element>
+    <type>com.umlet.element.Note</type>
+    <coordinates>
+      <x>770</x>
+      <y>720</y>
+      <w>160</w>
+      <h>30</h>
+    </coordinates>
+    <panel_attributes>Returns dict, a key per file</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <type>com.umlet.element.Note</type>
+    <coordinates>
+      <x>990</x>
+      <y>720</y>
+      <w>130</w>
+      <h>30</h>
+    </coordinates>
+    <panel_attributes>Returns arbitrary data</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <type>com.umlet.element.Note</type>
+    <coordinates>
+      <x>550</x>
+      <y>720</y>
+      <w>180</w>
+      <h>30</h>
+    </coordinates>
+    <panel_attributes>Returns dict, a key per channel</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <type>com.umlet.element.Note</type>
+    <coordinates>
+      <x>550</x>
+      <y>770</y>
+      <w>180</w>
+      <h>90</h>
+    </coordinates>
+    <panel_attributes>data = {
+		    'channel': 
+			     {
+			         'file': 'content'
+		        }
+		}</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <type>com.umlet.element.Note</type>
+    <coordinates>
+      <x>770</x>
+      <y>770</y>
+      <w>160</w>
+      <h>90</h>
+    </coordinates>
+    <panel_attributes>data = {
+		    'file': 'content'
+		}</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <type>com.umlet.element.Note</type>
+    <coordinates>
+      <x>990</x>
+      <y>770</y>
+      <w>130</w>
+      <h>90</h>
+    </coordinates>
+    <panel_attributes>data = 'content'</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <type>com.umlet.element.Relation</type>
+    <coordinates>
+      <x>760</x>
+      <y>610</y>
+      <w>50</w>
+      <h>130</h>
+    </coordinates>
+    <panel_attributes/>
+    <additional_attributes>30;110;30;30</additional_attributes>
+  </element>
+  <element>
+    <type>com.umlet.element.Relation</type>
+    <coordinates>
+      <x>980</x>
+      <y>610</y>
+      <w>50</w>
+      <h>130</h>
+    </coordinates>
+    <panel_attributes/>
+    <additional_attributes>30;110;30;30</additional_attributes>
+  </element>
+  <element>
+    <type>com.umlet.element.Relation</type>
+    <coordinates>
+      <x>540</x>
+      <y>610</y>
+      <w>50</w>
+      <h>130</h>
+    </coordinates>
+    <panel_attributes/>
+    <additional_attributes>30;110;30;30</additional_attributes>
   </element>
 </diagram>

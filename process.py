@@ -45,27 +45,37 @@ Inbetween data being either read or written, processing occurs.
 from abc import ABCMeta, abstractmethod
 import logging
 import json
-import ConfigParser
+from numbers import Number  # Used to map dt to file ext.
+# import ConfigParser
 
 log = logging.getLogger('openmetadata.process')
 
 
-def preprocess(raw, format):
+def processoutgoing(raw, format):
     """Process outgoing data"""
     process = mapping.get(format)
     if not process:
         return None
 
-    return process.pre(raw)
+    return process.outgoing(raw)
 
 
-def postprocess(raw, format):
+def processincoming(raw, format):
     """Process incoming data"""
     process = mapping.get(format)
     if not process:
         return None
 
-    return process.post(raw)
+    return process.incoming(raw)
+
+
+def cast(raw, format):
+    """Cast `raw` to datatype appropriate to `format`"""
+    process = mapping.get(format)
+    if not process:
+        return None
+
+    return process.cast(raw)
 
 
 class AbstractFormat(object):
@@ -74,7 +84,7 @@ class AbstractFormat(object):
     __metaclass__ = ABCMeta
 
     @abstractmethod
-    def pre(cls, raw):
+    def outgoing(cls, raw):
         """Process --> Written
 
         `raw` is interpreted based on the given format and
@@ -87,18 +97,26 @@ class AbstractFormat(object):
         pass
 
     @abstractmethod
-    def post(cls, raw):
+    def incoming(cls, raw):
         """Process <-- Read"""
+        pass
+
+    @abstractmethod
+    def cast(cls, raw):
         pass
 
 
 class DotTxt(AbstractFormat):
     @classmethod
-    def pre(self, raw):
+    def outgoing(cls, raw):
         return str(raw or '')
 
     @classmethod
-    def post(self, raw):
+    def incoming(cls, raw):
+        return str(raw)
+
+    @classmethod
+    def cast(cls, raw):
         return str(raw)
 
 
@@ -108,7 +126,7 @@ class DotMdw(DotTxt):
 
 class DotJson(AbstractFormat):
     @classmethod
-    def pre(self, raw):
+    def outgoing(self, raw):
         processed = {}
 
         try:
@@ -121,35 +139,39 @@ class DotJson(AbstractFormat):
         return processed
 
     @classmethod
-    def post(self, raw):
+    def incoming(self, raw):
         processed = json.loads(raw)
         return processed
 
-
-class DotIni(AbstractFormat):
     @classmethod
-    def pre(self, raw):
-        config = ConfigParser.ConfigParser()
-        config.optionxform = str  # Case-sensitive
-        config.read_string(raw)
+    def cast(self, raw):
+        return 
 
-        # Convert to dictionary
-        data = {}
-        for section in config.sections():
-            data[section] = {}
-            for option in config.options(section):
-                data[section][option] = config.get(section, option)
 
-        return data
+# class DotIni(AbstractFormat):
+#     @classmethod
+#     def outgoing(self, raw):
+#         config = ConfigParser.ConfigParser()
+#         config.optionxform = str  # Case-sensitive
+#         config.read_string(raw)
 
-    @classmethod
-    def post(self, raw):
-        pass
+#         # Convert to dictionary
+#         data = {}
+#         for section in config.sections():
+#             data[section] = {}
+#             for option in config.options(section):
+#                 data[section][option] = config.get(section, option)
+
+#         return data
+
+#     @classmethod
+#     def incoming(self, raw):
+#         pass
 
 
 class DotGdoc(AbstractFormat):
     @classmethod
-    def pre(self, raw):
+    def outgoing(self, raw):
         raise NotImplementedError
 
         # Raw is a Gdoc data-structure
@@ -162,7 +184,7 @@ class DotGdoc(AbstractFormat):
         return document
 
     @classmethod
-    def post(self, raw):
+    def incoming(self, raw):
         raise NotImplementedError
 
         link = raw.get('link')
@@ -179,11 +201,32 @@ class DotGdoc(AbstractFormat):
         return gdoc
 
 
-mapping = {'.txt': DotTxt,
-           '.mdw': DotMdw,
-           '.json': DotJson,
-           '.ini': DotIni,
-           '.gdoc': DotGdoc}
+# Default file extensions of datatype
+#
+# Todo
+#   - Figure out a better way to reverse-engineer file format
+#   based on datatype
+# datatype = {basestring: '.txt',
+#             unicode: '.txt',
+#             str: '.txt',
+#             dict: '.json',
+#             list: '.json',
+#             Number: '.json'}
+
+# Cast channel-extension to file-extension
+channel_to_file =   {
+                        '.kvs': '.json',
+                        '.txt': '.txt',
+                        '.mdw': '.txt',
+                    }
+
+mapping =   {
+                '.txt': DotTxt,
+                '.mdw': DotMdw,
+                '.json': DotJson,
+                # '.ini': DotIni,
+                '.gdoc': DotGdoc
+            }
 
 
 if __name__ == '__main__':
@@ -196,8 +239,8 @@ if __name__ == '__main__':
     print file.data
 
     # inputted = {"Key": "Value"}
-    # asstring = preprocess(inputted, '.json')
-    # asdict = postprocess(asstring, '.json')
+    # asstring = processoutgoing(inputted, '.json')
+    # asdict = processincoming(asstring, '.json')
 
     # print asstring
     # print asdict

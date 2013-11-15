@@ -77,7 +77,7 @@ def test_clear_file():
 
     file.clear()
 
-    assert_equals(file.exists(), False)
+    assert_equals(file.exists, False)
 
     # Clean up
     channel.clear()
@@ -96,7 +96,7 @@ def test_clear_channel():
 
     channel.clear()
 
-    assert_equals(channel.exists(), False)
+    assert_equals(channel.exists, False)
 
 
 def test_clear_folder():
@@ -112,7 +112,7 @@ def test_clear_folder():
 
     folder.clear()
 
-    assert_equals(folder.exists(), False)
+    assert_equals(folder.exists, False)
 
 
 def test_comparison():
@@ -366,9 +366,9 @@ def test_read_channel():
     metadata = {}
     for channel in folder:
         channel.read()
-        metadata.update(channel.data)
+        metadata.update({channel.name: channel.data})
 
-    print metadata
+    # print metadata
 
 
 def test_read_folder():
@@ -376,6 +376,60 @@ def test_read_folder():
     folder = om.Folder(persist)
     folder.read()
     folder.data
+
+
+def test_cascading_metadata():
+    """Cascading metadata behaves appropriately
+
+    The child folder contains overriding properties from
+    the parent `persist` folder.
+
+    Namely
+        Persist -> par1: {key1: {val1: Original, val2: Original}, key2: {val2: Original}}
+        Child   -> par1: {key1: {val1: Changed, val3: Original}, key2: Changed}
+
+    The result should be
+        par1: {key1: {val1: Changed, val2: Original, val3: Original}, key2: Changed}
+
+    """
+
+    # persist_obj = om.Folder(persist)
+    child_obj = om.Folder(os.path.join(persist, 'child'))
+    csmetadata = om.transaction.cascade(child_obj, 'cascading')
+    
+    # A is overriden
+    assert_equals(csmetadata['root']['A'], 'Overidden')
+
+    # B is not
+    assert_equals(csmetadata['root']['B'], 'Original')
+
+    # more remains
+    assert_equals(csmetadata['more'], {'key': 'value'})
+
+
+def test_channel_set_multiple_times():
+    """Set channel data multiple times"""
+    folder = om.Factory.create(root)
+    channel = om.Channel('testing.kvs', folder)
+
+    channel.data = {u'file1': {u'some data': u'data'}, 'file2': {'some': u'data'}}
+    channel.data = {u'file1': {u'some data': u'data'}, 'file2': {'some': u'data'}}
+    channel.data = {u'file4': {u'some data': u'data'}, 'file1': {'some': u'data'}}
+
+    print channel.data
+
+
+def test_defaultfileextension():
+    """Default file extensions of Channel works"""
+    folder = om.Folder(persist)
+    channel = om.Channel('testing_dfe.txt', folder)
+    channel.data = {'key': {'hello': 5}}
+    # channel.write()
+    # channel.read()
+    # data = channel.data['key']
+    # print "%r(%s)" % (data.__class__, data)
+    # channel.write()
+    # channel.clear()
 
 
 if __name__ == '__main__':
@@ -386,8 +440,14 @@ if __name__ == '__main__':
     import nose
     nose.run(defaultTest=__name__)
 
+    # test_inmemorychildren()
+
+    # test_defaultfileextension()
+    # test_channel_set_multiple_times()
+    # test_cascading_metadata()
     # test_relativepath()
     # print metadata
+    # test_clear_file()
     # test_clear_folder()
     # test_relativepath()
     # test_children()
@@ -404,3 +464,4 @@ if __name__ == '__main__':
     # test_copy_reference()
     # test_read_channel()
     # test_hidden_channels()
+    # test_cascading_metadata()

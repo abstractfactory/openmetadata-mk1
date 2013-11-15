@@ -29,6 +29,7 @@ import os
 import logging
 import shutil
 import time
+import collections
 from abc import ABCMeta, abstractmethod
 
 from openmetadata import constant
@@ -43,9 +44,19 @@ def hidden(name):
 
 
 class AbstractPath(object):
-    """Baseclass for anything that lives upon a path of some sort.
-    This includes Folders, files but also database locations as they
-    also depend on a path of sorts."""
+    """Lowest level Open Metadata entity
+
+    Parameters
+        data        -->   :
+        data        <--   :
+        read()            :
+        name        -->   :
+        basename    -->
+
+    Variables
+        dirty       : (bool) If a channel contains data not yet written
+
+    """
 
     __metaclass__ = ABCMeta
 
@@ -53,6 +64,7 @@ class AbstractPath(object):
     def __init__(self, path, parent=None):
         self._path = path
         self._parent = parent
+        self._dirty = None
 
         if parent:
             assert isinstance(parent, AbstractPath)
@@ -95,6 +107,62 @@ class AbstractPath(object):
             return other.path != self.path
         return other != self.path
 
+    def __hash__(self):
+        """Used with set()
+
+        Comparing two path objects is the same as comparing two
+        absolute paths with each other. 
+
+        Same absolute path == same objects.
+
+        """
+
+        return hash(self.internalpath)
+
+    @property
+    def data(self):
+        """Read all contained childrens metadata"""
+
+        metadata = {}
+        for child in self:
+            data = child.data
+            if data:
+                metadata.update({child.name: child.data})
+
+        return metadata
+
+    @data.setter
+    def data(self, data):
+        """Slightly more complex
+
+        Interpret `data` and reverse-engineer it into individual
+        Channel and File objects. Then, inject `data` into its 
+        corresponding object.
+
+        Channel is doing it by first removing any pre-existing
+        files under it prior to writing. This would be inefficient
+        on a Folder level.
+
+        """
+
+        raise NotImplementedError
+
+    def read(self):
+        """Update contents of all contained File objects
+
+        This reads each individual File from disk and updates its
+        content. This must be done each time a file on disk is
+        changed.
+
+        """
+
+        for child in self:
+            child.read()
+
+        self.dirty = None
+
+        return self
+
     @property
     def name(self):
         """Return name without extension"""
@@ -119,6 +187,7 @@ class AbstractPath(object):
     def relativepath(self, path):
         self._path = path
 
+    @property
     def exists(self):
         """Does the resolved path exist?
 
@@ -160,6 +229,14 @@ class AbstractPath(object):
 
         return output
 
+    def remove(self, child):
+        """Physically remove `child` from disk"""
+        if not child in self._children:
+            raise ValueError('"%s" not in "%s"' % (child, self.path))
+
+        child.clear()
+        self._children.remove(child)
+
     @property
     def path(self):
         """Return full path of `self`, including any parent
@@ -175,36 +252,46 @@ class AbstractPath(object):
         parent = self._parent
 
         if parent:
-            parent_path = parent.path
-
             """
-            When querying a child of Folder, return the full
-            path of that child. 
-            
-            E.g. \folder\.meta\channel1.txt
- 
-            However, querying the path of Folder returns
-            the logical path.
-            
-            E.g. \folder
-            
-            This is so that we can ask a Folder for its parent
-            and recieve the result we would expect.
-            
-            E.g. Folder('\parent\of\folder').parent
-            = Folder('\parent\of')
-            
-            As opposed to
-            Folder('\parent\of\folder\.meta').parent
-            Folder('\parent\of\folder')
+                When querying a child of Folder, return the full
+                path of that child. 
+                
+                E.g. \folder\.meta\channel1.txt
+     
+                However, querying the path of Folder returns
+                the logical path.
+                
+                E.g. \folder
+                
+                This is so that we can ask a Folder for its parent
+                and recieve the result we would expect.
+                
+                E.g. Folder('\parent\of\folder').parent
+                = Folder('\parent\of')
+                
+                As opposed to
+                Folder('\parent\of\folder\.meta').parent
+                Folder('\parent\of\folder')
 
             """
 
-            if isinstance(parent, Folder):
-                parent_path = os.path.join(parent_path, constant.Meta)
-
+            parent_path = parent.internalpath
             path = os.path.join(parent_path, path)
 
+        return path
+
+    @property
+    def internalpath(self):
+        """Return full path of `self`, including any internal children
+
+        E.g.
+            Folder.path == \folder\.meta
+            Channel.internalpath == \folder\.meta\channel
+
+        """
+        path = self.path
+        if isinstance(self, Folder):
+            path = os.path.join(path, constant.Meta)
         return path
 
     @property
@@ -212,6 +299,13 @@ class AbstractPath(object):
         if not self._parent:
             if os.path.exists(self.path):
                 parent_path = os.path.dirname(self.path)
+
+                # When dirname reaches the highest parent in a hierarchy,
+                # it returns `self` as parent. We circumvent this and
+                # return None instead.
+                if parent_path == self.path:
+                    return None
+
                 return Factory.create(parent_path)
             return None
 
@@ -242,6 +336,21 @@ class AbstractPath(object):
         return folder
 
     @property
+    def channel(self):
+        channel = self
+
+        count = 0
+        while not isinstance(channel, Channel):
+            channel = channel.parent
+
+            if count > 100:
+                raise ValueError("Something's not right. The layout of"
+                    " %s is invalid" % self.path)
+            count += 1
+
+        return channel
+
+    @property
     def extension(self):
         """Return extension of `self.path`
 
@@ -267,24 +376,14 @@ class AbstractPath(object):
         return hidden(name)
 
     def findparent(self, parent=None):
-        """Locate a parent up-stream by name `parent`"""
-        if not parent:
-            return self.parent
+        raise NotImplementedError
 
-        count = 0
-        current_parent = self.parent
-        while current_parent.basename != parent:
-            if current_parent.basename == constant.Meta:
-                self.log.debug(".meta root reached")
-                return None
-
-            current_parent = current_parent.parent
-
-            count += 1
-            if count > 10:
-                return None
-
-        return current_parent
+    def findchild(self, child):
+        """Locate a child by name"""
+        for _child in self:
+            if _child.name == child:
+                return _child
+        return None
 
     @property
     def trash(self):
@@ -307,6 +406,14 @@ class AbstractPath(object):
         # 3. Duplicate `self` into .rev folder, under the current date and time
 
         pass
+
+    @property
+    def dirty(self):
+        return self._dirty
+
+    @dirty.setter
+    def dirty(self, dirty):
+        self._dirty = dirty
 
     def clear(self, max_retries=10):
         """Physically remove `self` and any of its children
@@ -377,53 +484,15 @@ class AbstractParent(AbstractPath):
 
     def __init__(self, path, parent=None):
         super(AbstractParent, self).__init__(path, parent)
-        self._children = []
+        self._children = set()
 
     def __iter__(self):
         for child in self.children:
             yield child
 
-    @property
-    def data(self):
-        """Read all contained childrens metadata
-
-        This means to find each File and return each of its
-        contained data. Each File still needs to update their
-        content via a call to .read(), which is also available
-        in AbstractParent
-
-        """
-
-        metadata = {}
-        for child in self:
-            metadata.update({self.name: child.data})
-        return metadata
-
-    @data.setter
-    def data(self, data):
-        """Slightly more complex
-
-        Interpret `data` and reverse-engineer it into individual
-        Channel and File objects. Then, inject `data` into its 
-        corresponding object.
-
-        """
-
-        raise NotImplementedError
-
-    def read(self):
-        """Update contents of all contained File objects
-
-        This reads each individual File from disk and updates its
-        content. This must be done each time a file on disk is
-        changed.
-
-        """
-
-        for child in self:
-            child.read()
-
-        return self
+    def clear(self):
+        super(AbstractParent, self).clear()
+        self._children = set()
 
     @property
     def children(self):
@@ -444,18 +513,13 @@ class AbstractParent(AbstractPath):
 
         """
 
-        path = self.path
-
-        if isinstance(self, Folder):
-            # Looking for children in a Folder means to look
-            # within its meta folder.
-            path = os.path.join(path, constant.Meta)
+        path = self.internalpath
 
         if os.path.exists(path):
             if os.path.isdir(path):
                 for child_path in os.listdir(path):
                     if child_path.startswith(".") or child_path in constant.HiddenFiles:
-                        self.log.debug("Skipping hidden folder: '%s'" % os.path.join(path, child_path))
+                        # self.log.debug("Skipping hidden folder: '%s'" % os.path.join(path, child_path))
                         continue
 
                     fullpath = os.path.join(path, child_path)
@@ -464,18 +528,21 @@ class AbstractParent(AbstractPath):
                     # as a logical child of this instance, don't add
                     # it again.
                     if fullpath in [child.path for child in self._children]:
-                        self.log.debug("'%r' already virtual, skipping" % child_path)
+                        # self.log.debug("'%r' already virtual, skipping" % child_path)
                         continue
 
                     obj = Factory.determine(fullpath)
                     if obj:
                         obj(child_path, self)
 
-        return self._children
+        return list(self._children)
 
     def addchild(self, child):
-        self._children.append(child)
+        # If we're adding a child with identical `path`,
+        # assume the new child contains newer data than 
+        # the current child and chuck the old one away.
         child._parent = self
+        self._children.add(child)
 
     def removechild(self, child):
         self._children.remove(child)
@@ -508,7 +575,7 @@ class AbstractParent(AbstractPath):
                     continue
 
                 obj = obj(child_path, self)
-                children.append(obj)
+                children.add(obj)
 
         return children
 
@@ -519,81 +586,126 @@ class Folder(AbstractParent):
     def __init__(self, path, parent=None):
         super(Folder, self).__init__(path, parent)
 
-    def addchild(self, child):
-        self._children.append(child)
-        child._parent = self
+        # TODO
+        self._localchildren = set()
 
 
 class Channel(AbstractParent):
+    """Channels store content, a Folder may have one or more channels.
+
+    ## Overview
+    Channels abstract the need to manually manage files. When data is
+    set, files are derived from channel `format`. When data is read the
+    result is always put in the resulting dictionary as a plain-old-datatype.
+
+    ## Model
+    Open Metadata is based on content as metadata. Content has no fixed
+    datatype or file-type, content is less rigid than so. The channel
+    then abstracts away specifics and presents the user with a unified
+    interface for all content, regardless of type.
+
+    ## Internal
+    Internal file-formats are based on channel-format. Channel formats
+    are simplified in that they are meant to capture, not the datatype,
+    but the type of content.
+
+    E.g. Images, Video, Key/Value pairs, Plain-text etc.
+
+    Parameters
+        data   -->  : (dict) Return data from each child. {'child': Content}
+        data   <--  : (dict) Each key represent a child
+
+    """
+
     log = logging.getLogger('openmetadata.lib.Channel')
 
     def __init__(self, path, parent=None):
         super(Channel, self).__init__(path, parent)
-        
-        # Enable/disable cascading accumulation of `Channel`
-        # An implementation of the Property-Pattern as discussed here:
+
+        # Local files are those added directly
+        # to the channel via data.setter
+        self._localchildren = set()
+
+    @property
+    def data(self):
+        # To maintain correlation between setting data
+        # and getting data, we store a temporary copy of data
+        # within `self` when we set it.
         #
-        # http://steve-yegge.blogspot.co.uk/2008/10/universal-design-pattern.html
-        self.cascading = False
+        # If there is any data currently stored, assume it to be
+        # the latest
 
-    def read(self, cascading=False):
-        # return super(Channel, self).read()
-        
-        # def cascade(all_metadata):
-        #     # Get metadata from current channel
-        #     super(Channel, self).read()
-        #     metadata = self.data
+        if self.dirty:
+            metadata = {}
+            for child in self._localchildren:
+                data = child.data
+                if data:
+                    metadata.update({child.name: child.data})
 
-        #     all_metadata = all_metadata or []
-        #     all_metadata.append(metadata)
+            return metadata
 
-        #     # Recursively step up the hierarchy and append
-        #     # metadata for each channel with identical name as
-        #     # `self`, until you hit a node with the optional
-        #     # variable, 'isRoot', telling it to stop traversing.
-        #     def recurse(p):
-        #         metadata_channel = metadata.get('metadata', {})
-        #         root_property = metadata_channel.get('isRoot')
-        #         if root_property:
-        #             return
+        data = super(Channel, self).data
 
-        #         folder = self.parent
-        #         if folder:
-        #             return folder.cascade(p)
 
-        #     recurse(all_metadata)
+        if not data:
+            # If data is empty, return with datatype intact
+            # E.g. {}, [], '' etc.
+            return data
 
-        #     return all_metadata
+        return data
 
-        # The following algorithm is based on this answer:
-        # http://stackoverflow.com/questions/3232943/update-value-of-a-nested-dictionary-of-varying-depth
-        # all_metadata = cascade()
-        all_metadata = [super(Channel, self).read().data]
-        all_metadata.reverse()
-            
-        import collections
+    @data.setter
+    def data(self, data):
+        """
+        Setting the data on a channel involves separating
+        said data into individual files.
 
-        def update(d, u):
-            for k, v in u.iteritems():
-                if isinstance(v, collections.Mapping):
-                    r = update(d.get(k, {}), v)
-                    d[k] = r
-                else:
-                    d[k] = u[k]
-            return d
+        Requirements
+            1. Property may set multiple times without writing inbetween. 
+                    This is so that front-ends such as About can safely 
+                    update a channel without necessarily writing it out 
+                    to disk for every update.
 
-        metadata = {}
-        for prop in all_metadata:
-            update(metadata, prop)
-        
-        # Finally, drop top-level channel name as it is implied
-        # via the method-call.
-        if metadata:
-            assert self.name in metadata.keys()
+        """
 
-        metadata = metadata.get(self.name, {})
-        
-        return metadata
+        file_extension = process.channel_to_file.get(self.extension)
+        if not file_extension:
+            self.log.error('Could not determine file format '
+                           'for channel "%s"' % self.basename)
+            return
+
+        self.dirty = True
+        self._localchildren = set()
+
+        assert(isinstance(data, dict))
+
+        for key, value in data.iteritems():
+            new_file = File(key + file_extension, self)
+            new_file.data = value
+            self._localchildren.add(new_file)
+
+
+    def write(self):
+        """Output locally stored files onto disk.
+
+        Writing effectively parents each written file to `self`
+        thus acting just as though it had been read(), without
+        actually reading any files from disk.
+
+        * This is allowed, since writing guarantees that resulting
+        content is identical to written data.
+
+        Note: Writing effectively removes all prior content
+
+        """
+
+        self.clear()
+
+        for file in self._localchildren:
+            file.write()
+
+        self.dirty = False
+        self._localchildren = set()
 
 
 class File(AbstractPath):
@@ -633,7 +745,7 @@ class File(AbstractPath):
             return self
         
         try:
-            processed = process.postprocess(raw, self.extension)
+            processed = process.processincoming(raw, self.extension)
         except ValueError as e:
             self.log.error("File empty: %s" % self.path)
             processed = {}
@@ -643,8 +755,6 @@ class File(AbstractPath):
 
         self._data = processed
 
-        # Return self to allow for chaining of read() and data
-        # e.g. self.read().data == data after being read.
         return self
 
     def write(self):
@@ -658,7 +768,17 @@ class File(AbstractPath):
             raise TypeError("No parent set")
 
         raw = self._data
-        processed = process.preprocess(raw, self.extension)
+        ext = self.extension
+        
+        if not ext in process.mapping:
+            self.log.error('Extension "%s" not recognised' % ext)
+            return None
+
+        processed = process.processoutgoing(raw, ext)
+        
+        if not processed:
+            self.log.error('Could not process "%s"' % self.path)
+            return None
 
         # Ensure preceeding hierarchy exists,
         # otherwise writing will fail.
@@ -674,7 +794,7 @@ class File(AbstractPath):
             import ctypes
 
             root = self.folder
-            if not ctypes.windll.kernel32.SetFileAttributesW(unicode(root.path), 2):
+            if not ctypes.windll.kernel32.SetFileAttributesW(unicode(root.internalpath), 2):
                 self.log.warning("Could not hide .meta folder")
         else:
             self.log.warning("Could not hide .meta folder on this OS: '%s'" % os.name)
@@ -688,7 +808,6 @@ class Factory:
         if not os.path.exists(path):
             raise OSError('"%s" not found' % path)
 
-        # basename = os.path.basename(path)
         parent = os.path.dirname(path)
         ext = os.path.splitext(path)[1]
 
@@ -766,4 +885,18 @@ class Factory:
 
 if __name__ == '__main__':
     cwd = os.getcwd()
-    root = os.path.join(cwd, 'test', 'dynamic')
+    root = os.path.join(cwd, 'test', 'persist')
+    # root = r's:\content\jobs\test\content\shots\1000'
+    # root = r's:\content\jobs\test'
+    folder = Factory.create(root)
+    channel = Channel('testing.kvs', folder)
+    # print channel.extension
+    # channel.data = {u'file1': {u'some data': u'data'}, 'file2': {'some': u'data'}}
+    # channel.data = {u'file1': {u'some data': u'data'}, 'file2': {'some': u'data'}}
+    # # channel.data = {u'file4': {u'some data': u'data'}, 'file1': {'some': u'data'}}
+
+    # channel.write()
+    # channel.read()
+    # print channel.data
+
+    print folder.children[2].read().data
