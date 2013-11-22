@@ -32,7 +32,7 @@ Inbetween data being either read or written, processing occurs.
 
 
 # Writing data
-    Open Metadata is a file-based database. This means that at the end 
+    Open MetaFolder is a file-based database. This means that at the end 
     of each write, a file must get written to disk. Whether it be 
     writing to Shotgun, Google Drive or Streaming data explicitly, a
     record of said operation is always stored on disk.
@@ -233,7 +233,7 @@ if __name__ == '__main__':
     import openmetadata as om
 
     path = r'A:\development\marcus\scripts\python\about\test\.meta\chan4.kvs\properties.json'
-    file = om.File(path)
+    file = om.MetaFile(path)
     file.read()
     print file.path
     print file.data

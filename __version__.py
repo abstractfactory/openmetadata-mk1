@@ -31,6 +31,6 @@ version = _get_version()
 changelog = {
     '0.1.0.dev': [
         'CORE: Separated top-level keys from kvs files into their own files',
-        'FEATURE: Added support for data.setter in Channel objects'
+        'FEATURE: Added support for data.setter in MetaChannel objects'
     ]
 }

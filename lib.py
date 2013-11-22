@@ -1,4 +1,4 @@
-"""Main objects of Open Metadata.
+"""Main objects of Open Metadata
 
 Notes
     Physical and Virtual entities are kept within the same objects.
@@ -29,7 +29,7 @@ import os
 import logging
 import shutil
 import time
-import collections
+# import collections
 from abc import ABCMeta, abstractmethod
 
 from openmetadata import constant
@@ -136,21 +136,21 @@ class AbstractPath(object):
         """Slightly more complex
 
         Interpret `data` and reverse-engineer it into individual
-        Channel and File objects. Then, inject `data` into its 
+        MetaChannel and MetaFile objects. Then, inject `data` into its 
         corresponding object.
 
-        Channel is doing it by first removing any pre-existing
+        MetaChannel is doing it by first removing any pre-existing
         files under it prior to writing. This would be inefficient
-        on a Folder level.
+        on a MetaFolder level.
 
         """
 
         raise NotImplementedError
 
     def read(self):
-        """Update contents of all contained File objects
+        """Update contents of all contained MetaFile objects
 
-        This reads each individual File from disk and updates its
+        This reads each individual MetaFile from disk and updates its
         content. This must be done each time a file on disk is
         changed.
 
@@ -191,7 +191,7 @@ class AbstractPath(object):
     def exists(self):
         """Does the resolved path exist?
 
-        Return self.path rather than self._path due to Folder (and possibly
+        Return self.path rather than self._path due to MetaFolder (and possibly
         others) modifying their path prior to returning it.
 
         The problem being that folder.exists would suggest checking for
@@ -253,25 +253,25 @@ class AbstractPath(object):
 
         if parent:
             """
-                When querying a child of Folder, return the full
+                When querying a child of MetaFolder, return the full
                 path of that child. 
                 
                 E.g. \folder\.meta\channel1.txt
      
-                However, querying the path of Folder returns
+                However, querying the path of MetaFolder returns
                 the logical path.
                 
                 E.g. \folder
                 
-                This is so that we can ask a Folder for its parent
+                This is so that we can ask a MetaFolder for its parent
                 and recieve the result we would expect.
                 
-                E.g. Folder('\parent\of\folder').parent
-                = Folder('\parent\of')
+                E.g. MetaFolder('\parent\of\folder').parent
+                = MetaFolder('\parent\of')
                 
                 As opposed to
-                Folder('\parent\of\folder\.meta').parent
-                Folder('\parent\of\folder')
+                MetaFolder('\parent\of\folder\.meta').parent
+                MetaFolder('\parent\of\folder')
 
             """
 
@@ -285,12 +285,12 @@ class AbstractPath(object):
         """Return full path of `self`, including any internal children
 
         E.g.
-            Folder.path == \folder\.meta
-            Channel.internalpath == \folder\.meta\channel
+            MetaFolder.path == \folder\.meta
+            MetaChannel.internalpath == \folder\.meta\channel
 
         """
         path = self.path
-        if isinstance(self, Folder):
+        if isinstance(self, MetaFolder):
             path = os.path.join(path, constant.Meta)
         return path
 
@@ -321,11 +321,11 @@ class AbstractPath(object):
 
     @property
     def folder(self):
-        """Return first-found parent of type Folder"""
+        """Return first-found parent of type MetaFolder"""
         folder = self
 
         count = 0
-        while not isinstance(folder, Folder):
+        while not isinstance(folder, MetaFolder):
             folder = folder.parent
 
             if count > 100:
@@ -340,7 +340,7 @@ class AbstractPath(object):
         channel = self
 
         count = 0
-        while not isinstance(channel, Channel):
+        while not isinstance(channel, MetaChannel):
             channel = channel.parent
 
             if count > 100:
@@ -518,7 +518,7 @@ class AbstractParent(AbstractPath):
         if os.path.exists(path):
             if os.path.isdir(path):
                 for child_path in os.listdir(path):
-                    if child_path.startswith(".") or child_path in constant.HiddenFiles:
+                    if child_path.startswith(".") or child_path in constant.HiddenMetaFiles:
                         # self.log.debug("Skipping hidden folder: '%s'" % os.path.join(path, child_path))
                         continue
 
@@ -580,32 +580,32 @@ class AbstractParent(AbstractPath):
         return children
 
 
-class Folder(AbstractParent):
-    log = logging.getLogger('openmetadata.lib.Folder')
+class MetaFolder(AbstractParent):
+    log = logging.getLogger('openmetadata.lib.MetaFolder')
 
     def __init__(self, path, parent=None):
-        super(Folder, self).__init__(path, parent)
+        super(MetaFolder, self).__init__(path, parent)
 
         # TODO
         self._localchildren = set()
 
 
-class Channel(AbstractParent):
-    """Channels store content, a Folder may have one or more channels.
+class MetaChannel(AbstractParent):
+    """MetaChannels store content, a MetaFolder may have one or more channels.
 
-    ## Overview
-    Channels abstract the need to manually manage files. When data is
-    set, files are derived from channel `format`. When data is read the
-    result is always put in the resulting dictionary as a plain-old-datatype.
+    -- Overview --
+    A MetaChannel abstract the need to manually manage MetaFiles. When data is
+    set, files are generated based on a cannels `format`. When data is read the
+    result is always put in a plain dictionary.
 
-    ## Model
+    -- Model --
     Open Metadata is based on content as metadata. Content has no fixed
     datatype or file-type, content is less rigid than so. The channel
     then abstracts away specifics and presents the user with a unified
     interface for all content, regardless of type.
 
-    ## Internal
-    Internal file-formats are based on channel-format. Channel formats
+    -- Internal --
+    Internal file-formats are based on channel-format. MetaChannel formats
     are simplified in that they are meant to capture, not the datatype,
     but the type of content.
 
@@ -617,10 +617,10 @@ class Channel(AbstractParent):
 
     """
 
-    log = logging.getLogger('openmetadata.lib.Channel')
+    log = logging.getLogger('openmetadata.lib.MetaChannel')
 
     def __init__(self, path, parent=None):
-        super(Channel, self).__init__(path, parent)
+        super(MetaChannel, self).__init__(path, parent)
 
         # Local files are those added directly
         # to the channel via data.setter
@@ -644,7 +644,7 @@ class Channel(AbstractParent):
 
             return metadata
 
-        data = super(Channel, self).data
+        data = super(MetaChannel, self).data
 
 
         if not data:
@@ -681,7 +681,7 @@ class Channel(AbstractParent):
 
         for key, value in data.iteritems():
             assert isinstance(key, basestring)
-            new_file = File(key + file_extension, self)
+            new_file = MetaFile(key + file_extension, self)
             new_file.data = value
             self._localchildren.add(new_file)
 
@@ -700,7 +700,8 @@ class Channel(AbstractParent):
 
         """
 
-        self.clear()
+        if self.exists:
+            self.clear()
 
         for file in self._localchildren:
             file.write()
@@ -709,11 +710,11 @@ class Channel(AbstractParent):
         self._localchildren = set()
 
 
-class File(AbstractPath):
-    log = logging.getLogger('openmetadata.lib.File')
+class MetaFile(AbstractPath):
+    log = logging.getLogger('openmetadata.lib.MetaFile')
     
     def __init__(self, path, parent=None):
-        super(File, self).__init__(path, parent)
+        super(MetaFile, self).__init__(path, parent)
         self._data = None
 
     @property
@@ -748,7 +749,7 @@ class File(AbstractPath):
         try:
             processed = process.processincoming(raw, self.extension)
         except ValueError as e:
-            self.log.error("File empty: %s" % self.path)
+            self.log.error("MetaFile empty: %s" % self.path)
             processed = {}
         except TypeError as e:
             self.log.error(e)
@@ -817,8 +818,8 @@ class Factory:
             children = os.listdir(path)
 
             if constant.Meta in children:
-                # Presence of Metadata folder within `path`
-                # makes `path` a Folder object...
+                # Presence of MetaFolder folder within `path`
+                # makes `path` a MetaFolder object...
                 
                 if os.path.basename(parent) == constant.Meta:
                     # ..unless its parent is a metadata folder,
@@ -827,38 +828,38 @@ class Factory:
                     if not ext:
                         log.warning('Invalid channel found within metadata folder: %s' % path)
                         return None
-                    return Channel
+                    return MetaChannel
 
-                return Folder
+                return MetaFolder
 
             if os.path.basename(parent) == constant.Meta:
-                # Folders within a metadata folder are
+                # Folders within a metafolder are
                 # always channels..
 
                 if not ext:
                     # ..but only channels with an extension are valid
                     log.warning('Invalid channel found within metadata folder: %s' % path)
                     return None
-                return Channel
+                return MetaChannel
             
-            # Blank folders are future metadata containers.
-            return Folder
+            # Blank folders are potential metafolders.
+            return MetaFolder
 
         else:
             # If it isn't a folder, it's a file.
             #
             # Take two steps up, if its a metadata folder
-            # then this is a File object.
-
+            # then this is a MetaFile object.
             possible_channel = os.path.dirname(path)
             possible_metafolder = os.path.dirname(possible_channel)
+
             if os.path.basename(possible_metafolder) == constant.Meta:
                 if not ext:
                     # ..but only channels with an extension are valid
                     log.warning('Invalid file found within channel: %s' % path)
                     return None
 
-                return File
+                return MetaFile
 
         log.warning("Can't figure out '%s'" % path)
         return None
@@ -890,7 +891,7 @@ if __name__ == '__main__':
     # root = r's:\content\jobs\test\content\shots\1000'
     # root = r's:\content\jobs\test'
     folder = Factory.create(root)
-    channel = Channel('testing.kvs', folder)
+    channel = MetaChannel('testing.kvs', folder)
     # print channel.extension
     # channel.data = {u'file1': {u'some data': u'data'}, 'file2': {'some': u'data'}}
     # channel.data = {u'file1': {u'some data': u'data'}, 'file2': {'some': u'data'}}

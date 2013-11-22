@@ -2,7 +2,7 @@
 
 The goal of this module is to provide as high-level utilities
 as possible for users who wish to have as little knowledge as
-possible about Open Metadata.
+possible about Open MetaFolder.
 
 Target audience leans towards Technical Directors or
 fellow scripters in any DCC.
@@ -38,8 +38,8 @@ def read(root):
     Returns dict() 
     {'channelname without extension': content}
 
-    As opposed to calling Folder.read().data, this method blends
-    Files together, disregarding if a channel has multiple files.
+    As opposed to calling MetaFolder.read().data, this method blends
+    MetaFiles together, disregarding if a channel has multiple files.
 
     They are blended in an alphabetical order, last one overwrites
     first one.
@@ -59,7 +59,7 @@ def read(root):
     """
 
     folder = lib.Factory.create(root)
-    assert isinstance(folder, lib.Folder)
+    assert isinstance(folder, lib.MetaFolder)
     return folder.read().data
 
 
@@ -95,7 +95,7 @@ def delete(root, max_retries=10):
 
 def findchannels(folder, term, result=None):
     """Return channels matching `term` up-wards through hierarchy"""
-    assert isinstance(folder, lib.Folder)
+    assert isinstance(folder, lib.MetaFolder)
     result = result or []
 
     # Note: We can only cascade channels of type .kvs
@@ -114,7 +114,7 @@ def findchannels(folder, term, result=None):
         isroot = False
 
         # TODO
-        # Find a way to optimize this. Channel is being read here
+        # Find a way to optimize this. MetaChannel is being read here
         # to find the isRoot property which is used solely to
         # determine whether or not to continue searching.
         # This is an expensive operation, and whats worse,
@@ -166,6 +166,6 @@ if __name__ == '__main__':
 
     package = os.getcwd()
     root = os.path.join(package, 'test', 'persist')
-    root = om.Folder(r's:\content\jobs\test\content\shots')
+    root = om.MetaFolder(r's:\content\jobs\test\content\shots')
 
     print cascade(root, 'properties')

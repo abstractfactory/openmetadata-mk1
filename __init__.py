@@ -1,6 +1,6 @@
 import constant, reference
 from transaction import write, read, update, delete, cascade
-from lib import Folder, Channel, File, Factory
+from lib import MetaFolder, MetaChannel, MetaFile, Factory
 
 import logging
 import sys

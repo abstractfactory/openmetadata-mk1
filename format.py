@@ -19,7 +19,7 @@ Implicit
     internet downloads or streams.
 
 
-* File refers to the end-result of any written data. OM is a file-based 
+* MetaFile refers to the end-result of any written data. OM is a file-based 
 database and this is the means with which it communicates with persistant
 storage.
 
