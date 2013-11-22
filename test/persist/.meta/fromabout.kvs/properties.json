@@ -1,0 +1,51 @@
+{
+    "projectInfo": {
+        "project": {
+            "projectId": "beast", 
+            "deliveryFormat": [
+                1280, 
+                720
+            ], 
+            "length": [
+                15, 
+                "sec"
+            ], 
+            "fps": 25, 
+            "workingFormat": [
+                1920, 
+                1080
+            ], 
+            "projectName": "Beast"
+        }, 
+        "client": {
+            "ftp": "ftp.whop.com", 
+            "producer": "edited on mac", 
+            "agency": "", 
+            "director": "", 
+            "user": "marcus", 
+            "pass": "abcabrakadabra"
+        }, 
+        "studio": {
+            "ftp": "ftp.studio.com", 
+            "2dLead": "Marcus Ottosson", 
+            "user": "Marcus", 
+            "pass": "marcuspass", 
+            "vfxProducer": "Marcus Ottosson", 
+            "vfxSupervisor": "Marcus Ottosson", 
+            "3dLead": "Marcus Ottosson"
+        }, 
+        "schedule": {
+            "deliveryDate": [
+                2013, 
+                7, 
+                10
+            ], 
+            "startDate": [
+                2012, 
+                7, 
+                10
+            ]
+        }
+    }, 
+    "description": "Beast is the end result of Pipi and junction between Tool, Weightshift and Pipi combined."
+}
