@@ -2,7 +2,7 @@
 
 The goal of this module is to provide as high-level utilities
 as possible for users who wish to have as little knowledge as
-possible about Open MetaFolder.
+possible about Open Folder.
 
 Target audience leans towards Technical Directors or
 fellow scripters in any DCC.
@@ -16,7 +16,7 @@ import logging
 import shutil
 import collections
 
-from openmetadata import lib
+from openmetadata import domain
 
 
 log = logging.getLogger('openmetadata.transaction')
@@ -32,35 +32,38 @@ def update(root, data):
     raise NotImplementedError
 
 
-def read(root):
+def read(root, channel=None, file=None):
     """Convenience method for reading metadata
 
-    Returns dict() 
-    {'channelname without extension': content}
+    Parameters
+        root    (str)   : Path to meta folder
+        channel (str)   : (optional) Name of individual channel
+        file    (str)   : (optional) Name of individual file
 
-    As opposed to calling MetaFolder.read().data, this method blends
-    MetaFiles together, disregarding if a channel has multiple files.
 
-    They are blended in an alphabetical order, last one overwrites
-    first one.
+    Returns
+        dict()          : {'obj.name': content}
+    
 
-    This introduces some interesting limitations:
-        - Parent channel must not exist twice
-
-        E.g.
-            Legal:
-                CHAN_1.txt
-                CHAN_2.kvs
-
-            Not legal:
-                CHAN_1.txt
-                CHAN_1.kvs
+    Calling this method with only `root` specified is identical
+    to calling Folder.read().data directly.
 
     """
 
-    folder = lib.Factory.create(root)
-    assert isinstance(folder, lib.MetaFolder)
-    return folder.read().data
+    obj = domain.Factory.create(root)
+    assert isinstance(obj, domain.Folder)
+
+    if channel:
+        obj = obj.child(channel)
+        if not obj:
+            return None
+
+        if file:
+            obj = obj.child(file)
+            if not obj:
+                return None
+
+    return obj.read().data
 
 
 def delete(root, max_retries=10):
@@ -95,7 +98,7 @@ def delete(root, max_retries=10):
 
 def findchannels(folder, term, result=None):
     """Return channels matching `term` up-wards through hierarchy"""
-    assert isinstance(folder, lib.MetaFolder)
+    assert isinstance(folder, domain.Folder)
     result = result or []
 
     # Note: We can only cascade channels of type .kvs
@@ -114,7 +117,7 @@ def findchannels(folder, term, result=None):
         isroot = False
 
         # TODO
-        # Find a way to optimize this. MetaChannel is being read here
+        # Find a way to optimize this. Channel is being read here
         # to find the isRoot property which is used solely to
         # determine whether or not to continue searching.
         # This is an expensive operation, and whats worse,
@@ -166,6 +169,6 @@ if __name__ == '__main__':
 
     package = os.getcwd()
     root = os.path.join(package, 'test', 'persist')
-    root = om.MetaFolder(r's:\content\jobs\test\content\shots')
+    root = om.Folder(r's:\content\jobs\test\content\shots')
 
     print cascade(root, 'properties')

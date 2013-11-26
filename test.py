@@ -18,30 +18,30 @@ def test_children(root=None):
     """Children are returned as appropriate objects
 
     Conditions:
-        - Children of MetaFolders are always MetaChannel
-        - Children of MetaChannel are either MetaFile or MetaFolder
-        - MetaFile has no children
+        - Children of Folders are always Channel
+        - Children of Channel are either File or Folder
+        - File has no children
 
     """
     
-    root = root or om.MetaFolder(persist)
-    if isinstance(root, om.lib.AbstractParent):
+    root = root or om.Folder(persist)
+    if isinstance(root, om.domain.AbstractParent):
         for child in root.children:
-            if isinstance(root, om.MetaFolder):
-                # Children of MetaFolders are always channels
-                assert_is_instance(child, om.MetaChannel)
-            if isinstance(root, om.MetaChannel):
-                assert isinstance(child, om.MetaFile) or isinstance(child, om.MetaFolder)
+            if isinstance(root, om.Folder):
+                # Children of Folders are always channels
+                assert_is_instance(child, om.Channel)
+            if isinstance(root, om.Channel):
+                assert isinstance(child, om.File) or isinstance(child, om.Folder)
 
             # Recursively test each child
             test_children(child)
     else:
-        assert_is_instance(root, om.MetaFile)
+        assert_is_instance(root, om.File)
 
 
 def test_relativepath():
     """Children contain relative paths"""
-    folder = om.MetaFolder(persist)
+    folder = om.Folder(persist)
     for child in folder:
         om_relpath = child.relativepath
         parent_path = os.path.join(folder.path, om.constant.Meta)
@@ -50,15 +50,15 @@ def test_relativepath():
         assert_equals(om_relpath, manual_relpath)
 
     # Manually adding a child
-    channel = om.MetaChannel(os.path.join(persist, r'.meta\chan.txt'), folder)
+    channel = om.Channel(os.path.join(persist, r'.meta\chan.txt'), folder)
     assert_equals(channel.relativepath, os.path.relpath(channel.path, os.path.join(folder.path, om.constant.Meta)))
     
-    channel = om.MetaChannel(os.path.join(dynamic, r'.meta\chan.txt'), folder)
+    channel = om.Channel(os.path.join(dynamic, r'.meta\chan.txt'), folder)
     assert_true(os.path.isabs(channel.relativepath))
 
 def test_extension():
     """Test extension returns extension including dot"""
-    folder = om.MetaFolder(persist)
+    folder = om.Folder(persist)
     for channel in folder:
         assert_equals(channel.extension, "." + channel.basename.rsplit(".", 1)[1])
         assert_equals(channel.extension, os.path.splitext(channel.path)[1])
@@ -66,11 +66,11 @@ def test_extension():
 
 def test_clear_file():
     """Clear individual file"""
-    folder = om.MetaFolder(persist)
+    folder = om.Folder(persist)
     
     # Add channel to it
-    channel = om.MetaChannel('new_channel.txt', folder)
-    file = om.MetaFile('document.txt', channel)
+    channel = om.Channel('new_channel.txt', folder)
+    file = om.File('document.txt', channel)
     
     file.data = "This is some data"
     file.write()
@@ -85,11 +85,11 @@ def test_clear_file():
 
 def test_clear_channel():
     """Clear individual channel"""
-    folder = om.MetaFolder(persist)
+    folder = om.Folder(persist)
     
     # Add channel to it
-    channel = om.MetaChannel('new_channel.txt', folder)
-    file = om.MetaFile('document.txt', channel)
+    channel = om.Channel('new_channel.txt', folder)
+    file = om.File('document.txt', channel)
     
     file.data = "This is some data"
     file.write()
@@ -101,11 +101,11 @@ def test_clear_channel():
 
 def test_clear_folder():
     """Remove ALL metadata"""
-    folder = om.MetaFolder(dynamic)
+    folder = om.Folder(dynamic)
     
     # Add channel to it
-    channel = om.MetaChannel('new_channel.txt', folder)
-    file = om.MetaFile('document.txt', channel)
+    channel = om.Channel('new_channel.txt', folder)
+    file = om.File('document.txt', channel)
     
     file.data = "This is some data"
     file.write()
@@ -117,31 +117,31 @@ def test_clear_folder():
 
 def test_comparison():
     """Separate instances of same path are equal"""
-    folder = om.MetaFolder(dynamic)
+    folder = om.Folder(dynamic)
     
     # Add channel to it
-    channel = om.MetaChannel('new_channel.txt', folder)
-    file = om.MetaFile('document.txt', channel)
+    channel = om.Channel('new_channel.txt', folder)
+    file = om.File('document.txt', channel)
 
-    file_other = om.MetaFile('document.txt', channel)
+    file_other = om.File('document.txt', channel)
 
     assert_equals(file, file_other)
 
 
 def test_iterator():
     """Iterator (for channel in folder) works"""
-    folder = om.MetaFolder(root)
+    folder = om.Folder(root)
 
     for channel in folder:
         # Child is indeed a channel
-        assert_is_instance(channel, om.MetaChannel)
+        assert_is_instance(channel, om.Channel)
 
         # Result of iterator is the same as calling
         # .children manually.
         assert_true(channel in folder.children)
 
         for file in channel:
-            assert_is_instance(file, om.MetaFile)
+            assert_is_instance(file, om.File)
             assert_true(file in channel.children)
 
 
@@ -169,13 +169,13 @@ def test_instancefactory(root=None):
     folders get assigned their respective objects.
 
     The rules are:
-        - Any folder with .meta within is a MetaFolder,
+        - Any folder with .meta within is a Folder,
             unless it's parent is also a .meta, then it is
-            a MetaChannel that may be considered a MetaFolder
+            a Channel that may be considered a Folder
         - Any folder within .meta is a channel
             if is has an extension.
         - Any file whose parents parent is a .meta folder
-            is a MetaFile object.
+            is a File object.
 
     !Todo!
     How:
@@ -190,13 +190,13 @@ def test_instancefactory(root=None):
 
     root = root or om.Factory.create(stress)
     
-    if isinstance(root, om.lib.AbstractParent):
+    if isinstance(root, om.domain.AbstractParent):
         for child in root.children:
             test_instancefactory(child)
 
     # Inserting a .meta folder directly
     metafolder = om.Factory.create(os.path.join(persist, om.constant.Meta))
-    assert_is_instance(metafolder, om.lib.MetaFolder)
+    assert_is_instance(metafolder, om.domain.Folder)
 
 # def test_om_write():
 #     """`om.write()` convenience method"""
@@ -211,9 +211,9 @@ def test_instancefactory(root=None):
 
 # def test_om_delete():
 #     """`om.delete()` convenience method"""
-#     meta = om.MetaFolder(os.path.join(dynamic, om.constant.Meta))
-#     chan = om.MetaChannel('chan.txt', parent=meta)
-#     file = om.MetaFile('document.txt', parent=chan)
+#     meta = om.Folder(os.path.join(dynamic, om.constant.Meta))
+#     chan = om.Channel('chan.txt', parent=meta)
+#     file = om.File('document.txt', parent=chan)
     
 #     data = 'some text'
 
@@ -224,33 +224,33 @@ def test_instancefactory(root=None):
 
 
 def test_factory_folder():
-    """Create MetaFolder via Factory"""
+    """Create Folder via Factory"""
     obj = om.Factory.create(persist)
-    assert_is_instance(obj, om.MetaFolder)
+    assert_is_instance(obj, om.Folder)
 
 
 def test_factory_channel():
-    """Create MetaChannel via Factory"""
+    """Create Channel via Factory"""
     chan = os.path.join(persist, '.meta', 'chan.txt')
 
     channel = om.Factory.create(chan)
-    assert_is_instance(channel, om.MetaChannel)
+    assert_is_instance(channel, om.Channel)
 
 
 def test_factory_file():
-    """Create MetaFile via Factory"""
+    """Create File via Factory"""
     chan = os.path.join(persist, '.meta', 'chan.txt', 'document.txt')
 
     channel = om.Factory.create(chan)
-    assert_is_instance(channel, om.MetaFile)
+    assert_is_instance(channel, om.File)
 
 
 def test_full_template():
     """New metadata from scratch using templates"""
 
-    folder = om.MetaFolder(dynamic)
-    chan = om.MetaChannel('chan.txt', parent=folder)
-    file = om.MetaFile('document.txt', parent=chan)
+    folder = om.Folder(dynamic)
+    chan = om.Channel('chan.txt', parent=folder)
+    file = om.File('document.txt', parent=chan)
     
     data = 'some text'
 
@@ -269,12 +269,12 @@ def test_full_template():
 def test_append_file_to_existing():
     """Append file to existing channel"""
 
-    folder = om.MetaFolder(persist)
+    folder = om.Folder(persist)
     channel = folder.children[0]
         
     data = "new content"
 
-    file_template = om.MetaFile('appended.txt', channel)
+    file_template = om.File('appended.txt', channel)
     file_template.data = data
     file_template.write()
 
@@ -282,7 +282,7 @@ def test_append_file_to_existing():
     file_instance = om.Factory.create(file_template.path)
     file_instance.read()
 
-    assert_is_instance(file_instance, om.MetaFile)
+    assert_is_instance(file_instance, om.File)
     assert_equals(file_instance.data, data)
 
     om.delete(file_instance.path)
@@ -291,15 +291,15 @@ def test_append_file_to_existing():
 def test_append_metadata_to_channel():
     """Append metadata to existing channel"""
 
-    meta = om.MetaFolder(persist)
+    meta = om.Folder(persist)
     channel = meta.children[0]
 
-    submeta = om.MetaFolder('.meta', parent=channel)
-    subchannel = om.MetaChannel('subchan.txt', parent=submeta)
+    submeta = om.Folder('.meta', parent=channel)
+    subchannel = om.Channel('subchan.txt', parent=submeta)
 
     data = 'some text'
 
-    file = om.MetaFile('document.txt', parent=subchannel)
+    file = om.File('document.txt', parent=subchannel)
     file.data = data
     file.write()
 
@@ -307,7 +307,7 @@ def test_append_metadata_to_channel():
     file_instance = om.Factory.create(file.path)
     file_instance.read()
 
-    assert_is_instance(file_instance, om.MetaFile)
+    assert_is_instance(file_instance, om.File)
     assert_equals(file_instance.data, data)
 
     om.delete(file_instance.path)
@@ -319,7 +319,7 @@ def test_hidden():
 
     """
 
-    folder = om.MetaFolder(persist)
+    folder = om.Folder(persist)
 
     hidden = None
     for channel in folder:
@@ -337,23 +337,24 @@ def test_hidden_channels():
 
     """
 
-    folder = om.MetaFolder(persist)
+    folder = om.Folder(persist)
     hidden = folder.hiddenchildren
     assert_true(hidden is not [])
 
+
 # def test_unique_channelname():
-#     """MetaChannel names must be unique"""
-#     folder = om.MetaFolder(persist)
+#     """Channel names must be unique"""
+#     folder = om.Folder(persist)
 
 #     # These channels have the same name, even though they
 #     # differ in their extensions. This is not valid due to
 #     # convenience method om.read() returns channel names 
 #     # without extension.
-#     channel1 = om.MetaChannel('unique1.txt', folder)
-#     channel2 = om.MetaChannel('unique1.kvs', folder)
+#     channel1 = om.Channel('unique1.txt', folder)
+#     channel2 = om.Channel('unique1.kvs', folder)
 
-#     file1 = om.MetaFile('temp.txt', channel1)
-#     file2 = om.MetaFile('temp.txt', channel2)
+#     file1 = om.File('temp.txt', channel1)
+#     file2 = om.File('temp.txt', channel2)
 
 #     # file1.write()
 #     assert_raises(1/0, DivisionByZeroException)
@@ -361,7 +362,7 @@ def test_hidden_channels():
 
 def test_read_channel():
     """Read individual channel"""
-    folder = om.MetaFolder(persist)
+    folder = om.Folder(persist)
 
     metadata = {}
     for channel in folder:
@@ -373,7 +374,7 @@ def test_read_channel():
 
 def test_read_folder():
     """Read full folder"""
-    folder = om.MetaFolder(persist)
+    folder = om.Folder(persist)
     folder.read()
     folder.data
 
@@ -393,8 +394,8 @@ def test_cascading_metadata():
 
     """
 
-    # persist_obj = om.MetaFolder(persist)
-    child_obj = om.MetaFolder(os.path.join(persist, 'child'))
+    # persist_obj = om.Folder(persist)
+    child_obj = om.Folder(os.path.join(persist, 'child'))
     csmetadata = om.transaction.cascade(child_obj, 'cascading')
     
     # A is overriden
@@ -410,7 +411,7 @@ def test_cascading_metadata():
 def test_channel_set_multiple_times():
     """Set channel data multiple times"""
     folder = om.Factory.create(root)
-    channel = om.MetaChannel('testing.kvs', folder)
+    channel = om.Channel('testing.kvs', folder)
 
     channel.data = {u'file1': {u'some data': u'data'}, 'file2': {'some': u'data'}}
     channel.data = {u'file1': {u'some data': u'data'}, 'file2': {'some': u'data'}}
@@ -420,9 +421,9 @@ def test_channel_set_multiple_times():
 
 
 def test_defaultfileextension():
-    """Default file extensions of MetaChannel works"""
-    folder = om.MetaFolder(persist)
-    channel = om.MetaChannel('testing_dfe.txt', folder)
+    """Default file extensions of Channel works"""
+    folder = om.Folder(persist)
+    channel = om.Channel('testing_dfe.txt', folder)
     channel.data = {'key': {'hello': 5}}
     # channel.write()
     # channel.read()
@@ -430,6 +431,14 @@ def test_defaultfileextension():
     # print "%r(%s)" % (data.__class__, data)
     # channel.write()
     # channel.clear()
+
+
+def test_individual_channel_convenience():
+    assert_is_instance(om.read(persist, 'testing'), dict)
+
+
+def test_individual_file_convenience():
+    assert_is_instance(om.read(persist, 'testing', 'file1'), dict)
 
 
 if __name__ == '__main__':
@@ -441,7 +450,8 @@ if __name__ == '__main__':
     nose.run(defaultTest=__name__)
 
     # test_inmemorychildren()
-
+    # test_individual_channel_convenience()
+    # test_individual_file_convenience()
     # test_defaultfileextension()
     # test_channel_set_multiple_times()
     # test_cascading_metadata()

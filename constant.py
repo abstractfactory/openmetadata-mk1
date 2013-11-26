@@ -8,4 +8,4 @@ Mdw = '.mdw'
 
 # In addition to files and folders prefixed with ".",
 # also keep these basenames hidden.
-HiddenMetaFiles = ['Thumbs.db', '.ds_store']
+HiddenFiles = ['Thumbs.db', '.ds_store']

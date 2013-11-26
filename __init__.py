@@ -1,6 +1,6 @@
-import constant, reference
+import constant
 from transaction import write, read, update, delete, cascade
-from lib import MetaFolder, MetaChannel, MetaFile, Factory
+from domain import Folder, Channel, File, Factory
 
 import logging
 import sys
