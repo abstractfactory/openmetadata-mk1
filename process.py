@@ -7,16 +7,16 @@
     E.g. ".json" is run through json.loads() whilst a ".txt" is
     run through str()
 
-Inbetween data being either read or written, processing occurs.
+    Processing occurs before/after data is read/written.
 
 
      ------------           -------------          ------------ 
-    |    disk    |  ---->  |   process   | ---->  |   output   |
+    |    disk    |  ---->  | postprocess | ---->  |   python   |
     |____________|         |_____________|        |____________|
 
 
      ------------           -------------          ------------ 
-    |   python   |  ---->  |   process   | ---->  |   output   |
+    |   python   |  ---->  |  preprocess | ---->  |    disk    |
     |____________|         |_____________|        |____________|    
 
 
@@ -45,7 +45,7 @@ Inbetween data being either read or written, processing occurs.
 from abc import ABCMeta, abstractmethod
 import logging
 import json
-from numbers import Number  # Used to map dt to file ext.
+# from numbers import Number  # Used to map dt to key ext.
 # import ConfigParser
 
 log = logging.getLogger('openmetadata.process')
@@ -169,63 +169,53 @@ class DotJson(AbstractFormat):
 #         pass
 
 
-class DotGdoc(AbstractFormat):
-    @classmethod
-    def outgoing(self, raw):
-        raise NotImplementedError
+# class DotGdoc(AbstractFormat):
+#     @classmethod
+#     def outgoing(self, raw):
+#         raise NotImplementedError
 
-        # Raw is a Gdoc data-structure
-        link = raw.get('link')
+#         # Raw is a Gdoc data-structure
+#         link = raw.get('link')
 
-        # Download document
-        google = gdata.login(usr, pw)
-        document = google.download(link)
+#         # Download document
+#         google = gdata.login(usr, pw)
+#         document = google.download(link)
 
-        return document
+#         return document
 
-    @classmethod
-    def incoming(self, raw):
-        raise NotImplementedError
+#     @classmethod
+#     def incoming(self, raw):
+#         raise NotImplementedError
 
-        link = raw.get('link')
-        data = raw.get('data')
+#         link = raw.get('link')
+#         data = raw.get('data')
 
-        # Upload document
-        google = gdata.login(usr, pw)
-        google.upload(data, link)
+#         # Upload document
+#         google = gdata.login(usr, pw)
+#         google.upload(data, link)
 
-        # Create what will eventually be written to disk.
-        # E.g. {"url": link, "resource_id": "document:1Euj54DtjdkRFd"}
-        gdoc = raw.dump()
+#         # Create what will eventually be written to disk.
+#         # E.g. {"url": link, "resource_id": "document:1Euj54DtjdkRFd"}
+#         gdoc = raw.dump()
         
-        return gdoc
+#         return gdoc
 
 
-# Default file extensions of datatype
-#
-# Todo
-#   - Figure out a better way to reverse-engineer file format
-#   based on datatype
-# datatype = {basestring: '.txt',
-#             unicode: '.txt',
-#             str: '.txt',
-#             dict: '.json',
-#             list: '.json',
-#             Number: '.json'}
 
-# Cast channel-extension to file-extension
+# Cast channel-extension to key-extension
 channel_to_file =   {
                         '.kvs': '.json',
                         '.txt': '.txt',
                         '.mdw': '.txt',
                     }
 
+
 mapping =   {
                 '.txt': DotTxt,
                 '.mdw': DotMdw,
-                '.json': DotJson,
+                '.json': DotJson
                 # '.ini': DotIni,
-                '.gdoc': DotGdoc
+                # '.gdoc': DotGdoc
             }
 
 
@@ -233,10 +223,11 @@ if __name__ == '__main__':
     import openmetadata as om
 
     path = r'A:\development\marcus\scripts\python\about\test\.meta\chan4.kvs\properties.json'
-    file = om.File(path)
-    file.read()
-    print file.path
-    print file.data
+    key = om.Key(path)
+    key.read()
+    print key.path
+    print key.exists
+    print key.data
 
     # inputted = {"Key": "Value"}
     # asstring = processoutgoing(inputted, '.json')

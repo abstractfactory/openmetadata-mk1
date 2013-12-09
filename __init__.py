@@ -1,6 +1,7 @@
 import constant
 from transaction import write, read, update, delete, cascade
-from domain import Folder, Channel, File, Factory
+from domain import Folder, Channel, Key, Factory
+from openmetadata import __version__
 
 import logging
 import sys
@@ -15,3 +16,6 @@ formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(messag
 stream_handler = logging.StreamHandler()
 stream_handler.setFormatter(formatter)
 log.addHandler(stream_handler)
+
+# Used in distutils
+# Name = 'Open Metadata'

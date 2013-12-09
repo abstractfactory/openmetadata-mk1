@@ -19,8 +19,8 @@ def test_children(root=None):
 
     Conditions:
         - Children of Folders are always Channel
-        - Children of Channel are either File or Folder
-        - File has no children
+        - Children of Channel are either Key or Folder
+        - Key has no children
 
     """
     
@@ -31,12 +31,12 @@ def test_children(root=None):
                 # Children of Folders are always channels
                 assert_is_instance(child, om.Channel)
             if isinstance(root, om.Channel):
-                assert isinstance(child, om.File) or isinstance(child, om.Folder)
+                assert isinstance(child, om.Key) or isinstance(child, om.Folder)
 
             # Recursively test each child
             test_children(child)
     else:
-        assert_is_instance(root, om.File)
+        assert_is_instance(root, om.Key)
 
 
 def test_relativepath():
@@ -70,7 +70,7 @@ def test_clear_file():
     
     # Add channel to it
     channel = om.Channel('new_channel.txt', folder)
-    file = om.File('document.txt', channel)
+    file = om.Key('document.txt', channel)
     
     file.data = "This is some data"
     file.write()
@@ -89,7 +89,7 @@ def test_clear_channel():
     
     # Add channel to it
     channel = om.Channel('new_channel.txt', folder)
-    file = om.File('document.txt', channel)
+    file = om.Key('document.txt', channel)
     
     file.data = "This is some data"
     file.write()
@@ -105,7 +105,7 @@ def test_clear_folder():
     
     # Add channel to it
     channel = om.Channel('new_channel.txt', folder)
-    file = om.File('document.txt', channel)
+    file = om.Key('document.txt', channel)
     
     file.data = "This is some data"
     file.write()
@@ -121,9 +121,9 @@ def test_comparison():
     
     # Add channel to it
     channel = om.Channel('new_channel.txt', folder)
-    file = om.File('document.txt', channel)
+    file = om.Key('document.txt', channel)
 
-    file_other = om.File('document.txt', channel)
+    file_other = om.Key('document.txt', channel)
 
     assert_equals(file, file_other)
 
@@ -141,7 +141,7 @@ def test_iterator():
         assert_true(channel in folder.children)
 
         for file in channel:
-            assert_is_instance(file, om.File)
+            assert_is_instance(file, om.Key)
             assert_true(file in channel.children)
 
 
@@ -175,7 +175,7 @@ def test_instancefactory(root=None):
         - Any folder within .meta is a channel
             if is has an extension.
         - Any file whose parents parent is a .meta folder
-            is a File object.
+            is a Key object.
 
     !Todo!
     How:
@@ -213,7 +213,7 @@ def test_instancefactory(root=None):
 #     """`om.delete()` convenience method"""
 #     meta = om.Folder(os.path.join(dynamic, om.constant.Meta))
 #     chan = om.Channel('chan.txt', parent=meta)
-#     file = om.File('document.txt', parent=chan)
+#     file = om.Key('document.txt', parent=chan)
     
 #     data = 'some text'
 
@@ -238,11 +238,11 @@ def test_factory_channel():
 
 
 def test_factory_file():
-    """Create File via Factory"""
+    """Create Key via Factory"""
     chan = os.path.join(persist, '.meta', 'chan.txt', 'document.txt')
 
     channel = om.Factory.create(chan)
-    assert_is_instance(channel, om.File)
+    assert_is_instance(channel, om.Key)
 
 
 def test_full_template():
@@ -250,7 +250,7 @@ def test_full_template():
 
     folder = om.Folder(dynamic)
     chan = om.Channel('chan.txt', parent=folder)
-    file = om.File('document.txt', parent=chan)
+    file = om.Key('document.txt', parent=chan)
     
     data = 'some text'
 
@@ -274,7 +274,7 @@ def test_append_file_to_existing():
         
     data = "new content"
 
-    file_template = om.File('appended.txt', channel)
+    file_template = om.Key('appended.txt', channel)
     file_template.data = data
     file_template.write()
 
@@ -282,7 +282,7 @@ def test_append_file_to_existing():
     file_instance = om.Factory.create(file_template.path)
     file_instance.read()
 
-    assert_is_instance(file_instance, om.File)
+    assert_is_instance(file_instance, om.Key)
     assert_equals(file_instance.data, data)
 
     om.delete(file_instance.path)
@@ -299,7 +299,7 @@ def test_append_metadata_to_channel():
 
     data = 'some text'
 
-    file = om.File('document.txt', parent=subchannel)
+    file = om.Key('document.txt', parent=subchannel)
     file.data = data
     file.write()
 
@@ -307,7 +307,7 @@ def test_append_metadata_to_channel():
     file_instance = om.Factory.create(file.path)
     file_instance.read()
 
-    assert_is_instance(file_instance, om.File)
+    assert_is_instance(file_instance, om.Key)
     assert_equals(file_instance.data, data)
 
     om.delete(file_instance.path)
@@ -353,8 +353,8 @@ def test_hidden_channels():
 #     channel1 = om.Channel('unique1.txt', folder)
 #     channel2 = om.Channel('unique1.kvs', folder)
 
-#     file1 = om.File('temp.txt', channel1)
-#     file2 = om.File('temp.txt', channel2)
+#     file1 = om.Key('temp.txt', channel1)
+#     file2 = om.Key('temp.txt', channel2)
 
 #     # file1.write()
 #     assert_raises(1/0, DivisionByZeroException)
@@ -395,8 +395,8 @@ def test_cascading_metadata():
     """
 
     # persist_obj = om.Folder(persist)
-    child_obj = om.Folder(os.path.join(persist, 'child'))
-    csmetadata = om.transaction.cascade(child_obj, 'cascading')
+    path = os.path.join(persist, 'child')
+    csmetadata = om.transaction.cascade(path, 'cascading')
     
     # A is overriden
     assert_equals(csmetadata['root']['A'], 'Overidden')
@@ -434,11 +434,32 @@ def test_defaultfileextension():
 
 
 def test_individual_channel_convenience():
-    assert_is_instance(om.read(persist, 'testing'), dict)
+    """Accessing individual channel via om.read works"""
+    data = om.read(path=persist, channel='testing')
+    assert_false(data == {})
+
+    # Non-existing channel returns dictionary
+    assert_is_instance(om.read(persist, 'NON_EXISTANT'), dict)
 
 
 def test_individual_file_convenience():
-    assert_is_instance(om.read(persist, 'testing', 'file1'), dict)
+    """Accessing individual file via om.read works"""
+    data = om.read(path=persist, channel='testing', key='file1')
+    assert_false(data == {})
+
+    data = om.read(persist, 'testing', 'NON_EXISTANT')
+    assert_equals(data, None)
+
+
+def test_om_write():
+    channel_data = {'channel1': {'key1': 'data'}}
+    key_data = 'data'
+
+    # Write to channel
+    # om.write(path=persist, channel='testing', data=channel_data)
+
+    # Write to key
+    # om.write(path=persist, channel='testing', key='temp', data=key_data)
 
 
 if __name__ == '__main__':
@@ -449,6 +470,8 @@ if __name__ == '__main__':
     import nose
     nose.run(defaultTest=__name__)
 
+    # test_cascading_metadata()
+    # test_om_write()
     # test_inmemorychildren()
     # test_individual_channel_convenience()
     # test_individual_file_convenience()

@@ -61,7 +61,10 @@ class AbstractPath(object):
 
     @abstractmethod
     def __init__(self, path, parent=None):
+        assert isinstance(path, basestring)
+
         self._path = path
+        self._extension = None
         self._parent = parent
         self._dirty = None
 
@@ -135,7 +138,7 @@ class AbstractPath(object):
         """Slightly more complex
 
         Interpret `data` and reverse-engineer it into individual
-        Channel and File objects. Then, inject `data` into its 
+        Channel and Key objects. Then, inject `data` into its 
         corresponding object.
 
         Channel is doing it by first removing any pre-existing
@@ -147,9 +150,9 @@ class AbstractPath(object):
         raise NotImplementedError
 
     def read(self):
-        """Update contents of all contained File objects
+        """Update contents of all contained Key objects
 
-        This reads each individual File from disk and updates its
+        This reads each individual Key from disk and updates its
         content. This must be done each time a file on disk is
         changed.
 
@@ -249,6 +252,13 @@ class AbstractPath(object):
 
         path = self._path
         parent = self._parent
+
+        custom_extension = self._extension
+        if custom_extension:
+            _path, _prevext = os.path.splitext(path)
+            if _prevext:
+                path = path[:-len(_prevext)]
+            path += custom_extension
 
         if parent:
             """
@@ -351,7 +361,7 @@ class AbstractPath(object):
 
     @property
     def extension(self):
-        """Return extension of `self.path`
+        """Return extension of `self.path`, favouring the user-defined extension.
 
         rsplit is used rather than os.path.splitext due
         to basenames starting with dot returning no extension,
@@ -365,7 +375,11 @@ class AbstractPath(object):
 
         """
 
-        return ".%s" % self.path.rsplit(".", 1)[-1]
+        return self._extension or ".%s" % self.path.rsplit(".", 1)[-1]
+
+    @extension.setter
+    def extension(self, extension):
+        self._extension = ext
 
     @property
     def hidden(self):
@@ -524,7 +538,7 @@ class AbstractParent(AbstractPath):
         if os.path.exists(path):
             if os.path.isdir(path):
                 for child_path in os.listdir(path):
-                    if child_path.startswith(".") or child_path in constant.HiddenFiles:
+                    if child_path.startswith(".") or child_path in constant.HiddenKeys:
                         # self.log.debug("Skipping hidden folder: '%s'" % os.path.join(path, child_path))
                         continue
 
@@ -600,7 +614,7 @@ class Channel(AbstractParent):
     """Channels store content, a Folder may have one or more channels.
 
     -- Overview --
-    A Channel abstract the need to manually manage Files. When data is
+    A Channel abstract the need to manually manage Keys. When data is
     set, files are generated based on a cannels `format`. When data is read the
     result is always put in a plain dictionary.
 
@@ -687,7 +701,7 @@ class Channel(AbstractParent):
 
         for key, value in data.iteritems():
             assert isinstance(key, basestring)
-            new_file = File(key + file_extension, self)
+            new_file = Key(key + file_extension, self)
             new_file.data = value
             self._localchildren.add(new_file)
 
@@ -716,11 +730,11 @@ class Channel(AbstractParent):
         self._localchildren = set()
 
 
-class File(AbstractPath):
-    log = logging.getLogger('openmetadata.lib.File')
+class Key(AbstractPath):
+    log = logging.getLogger('openmetadata.lib.Key')
     
     def __init__(self, path, parent=None):
-        super(File, self).__init__(path, parent)
+        super(Key, self).__init__(path, parent)
         self._data = None
 
     @property
@@ -729,6 +743,9 @@ class File(AbstractPath):
 
     @data.setter
     def data(self, data):
+        # if isinstance(data, basestring):
+        #     self._extension = '.txt'
+
         self._data = data
 
     def read(self):
@@ -755,7 +772,7 @@ class File(AbstractPath):
         try:
             processed = process.processincoming(raw, self.extension)
         except ValueError as e:
-            self.log.error("File empty: %s" % self.path)
+            self.log.error("Key empty: %s" % self.path)
             processed = {}
         except TypeError as e:
             self.log.error(e)
@@ -819,6 +836,8 @@ class Factory:
         parent = os.path.dirname(path)
         ext = os.path.splitext(path)[1]
 
+        # if path is symlink
+
         if os.path.isdir(path):
             # Inspect it's children
             children = os.listdir(path)
@@ -855,7 +874,7 @@ class Factory:
             # If it isn't a folder, it's a file.
             #
             # Take two steps up, if its a metadata folder
-            # then this is a File object.
+            # then this is a Key object.
             possible_channel = os.path.dirname(path)
             possible_metafolder = os.path.dirname(possible_channel)
 
@@ -865,7 +884,7 @@ class Factory:
                     log.warning('Invalid file found within channel: %s' % path)
                     return None
 
-                return File
+                return Key
 
         log.warning("Can't figure out '%s'" % path)
         return None
@@ -897,7 +916,11 @@ if __name__ == '__main__':
     # root = r's:\content\jobs\test\content\shots\1000'
     # root = r's:\content\jobs\test'
     folder = Factory.create(root)
-    print folder.child('testing')
+    channel = Channel('test', folder)
+    key = Key('test', channel)
+    key.data = 'test'
+    print key.path
+    # print folder.child('testing')
     # channel = Channel('testing.kvs', folder)
     # print channel.extension
     # channel.data = {u'file1': {u'some data': u'data'}, 'file2': {'some': u'data'}}
