@@ -4,6 +4,8 @@
 
 **Description**
 
+> Note: This implementation has been superseeded by the next version of Open Metadata, found here: https://github.com/abstractfactory/openmetadata
+
 A cross-platform, hierarchical metadata API written in Python for storage and retrieval of any data-format of any size and complexity. 
 Open-source software and [available on GitHub](https://github.com/abstract-factory/openmetadata) under the [MIT license](http://opensource.org/licenses/MIT>).
 
